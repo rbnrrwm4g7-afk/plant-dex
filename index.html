@@ -58,6 +58,11 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 input[type="range"] { padding: 0; border: 0; background: transparent; accent-color: var(--accent); }
 input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
 
+.names { list-style: none; margin: 0; padding: 4px 4px 0; }
+.names li { margin: 0; }
+.names button { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); align-items: baseline; gap: 6px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 12px 2px; color: inherit; cursor: pointer; font-family: var(--ls-font, var(--font-display)); font-size: var(--ls-size, 18px); letter-spacing: .06em; line-height: 1.35; }
+.names .no { opacity: .55; font-size: .72em; }
+.names .nn { overflow-wrap: anywhere; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 16px 14px; padding: 4px; }
 .cell { display: flex; flex-direction: column; gap: 7px; padding: 7px 7px 9px; min-width: 0; text-align: center; cursor: pointer;
   background: var(--plate); color: var(--platefg); border: 1.5px solid var(--plateline); border-radius: 2px;
@@ -150,6 +155,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     <button type="button" class="mt" data-act="new">식물 추가</button>
     <button type="button" class="mt" data-view="all" aria-pressed="true">전체 목록</button>
     <button type="button" class="mt" data-view="group" aria-pressed="false">종류별</button>
+    <button type="button" class="mt" data-view="names" aria-pressed="false">이름 목록</button>
     <button type="button" class="mt" data-view="gallery" aria-pressed="false">사진첩</button>
     <span class="count" id="count"></span>
   </nav>
@@ -201,7 +207,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     ["gaegu", "개구쟁이", '"Gaegu",cursive', 700], ["jua", "주아", '"Jua",sans-serif', 400], ["song", "송명", '"Song Myung",serif', 400],
     ["plex", "IBM 플렉스", '"IBM Plex Sans KR",sans-serif', 600], ["mono", "모노 (영문 추천)", '"IBM Plex Mono",ui-monospace,monospace', 500]
   ];
-  var DEF = { tt: { text: "나의 식물 도감", font: "gowun", size: 40 }, ts: { text: "MY PLANT COLLECTION", font: "mono", size: 11 }, nm: { font: "gowun", size: 14 } };
+  var DEF = { tt: { text: "나의 식물 도감", font: "gowun", size: 40 }, ts: { text: "MY PLANT COLLECTION", font: "mono", size: 11 }, nm: { font: "gowun", size: 14 }, ls: { font: "gowun", size: 18 } };
   var COLORS = [["bg", "전체 배경"], ["plate", "식물 카드 배경"], ["plateline", "카드 테두리"], ["tab", "메뉴 탭"], ["tabon", "선택된 메뉴 탭"]];
 
   var state = { plants: [], loaded: false, err: "", view: "all", openId: null, mode: "view", confirm: null, pendingFile: null, busy: false, lb: null, gl: null, apiId: "" };
@@ -252,6 +258,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     set("--plate", plate); set("--platefg", platefg); set("--plateline", plateline);
     set("--tab", tab); set("--tabfg", ink(tab)); set("--tabon", tabon); set("--tabonfg", ink(tabon));
     var nmo = T.nm || {}; set("--nm-font", fontOf(nmo.font || DEF.nm.font)[2]); set("--nm-size", (Number(nmo.size) || DEF.nm.size) + "px");
+    var lso = T.ls || {}; set("--ls-font", fontOf(lso.font || DEF.ls.font)[2]); set("--ls-size", (Number(lso.size) || DEF.ls.size) + "px");
     s.colorScheme = dark ? "dark" : "light";
     ["tt", "ts"].forEach(function (k) {
       var o = T[k] || {}, d = DEF[k], f = fontOf(o.font || d.font), el = $(k === "tt" ? "#t-main" : "#t-sub");
@@ -388,7 +395,11 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   function render() {
     var n = state.plants.length, html = "", btns = document.querySelectorAll("[data-view]"), i, msg;
     for (i = 0; i < btns.length; i++) btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-view") === state.view ? "true" : "false");
-    if (state.view === "gallery") {
+    if (state.view === "names") {
+      $("#count").textContent = state.loaded ? "총 " + n + "종" : "";
+      html = '<ol class="names">' + state.plants.map(function (p, k) { return '<li><button type="button" data-open="' + esc(p.id) + '"><span class="no">' + String(k + 1).padStart(2, "0") + '.</span><span class="nn">' + esc(fullName(p)) + "</span></button></li>"; }).join("") + "</ol>";
+      msg = state.err || (!state.loaded ? "도감을 불러오는 중이에요." : (!n ? "아직 등록한 식물이 없어요." : ""));
+    } else if (state.view === "gallery") {
       galItems = buildGallery();
       $("#count").textContent = state.loaded ? "사진 " + galItems.length + "장" : "";
       html = (unlocked ? '<div class="g-add" style="margin-bottom:14px"><input id="a-date" type="date" value="' + today() + '" aria-label="촬영한 날짜"><input id="a-note" type="text" placeholder="메모 (선택)" aria-label="사진 메모" autocomplete="off"><label class="btn primary" for="a-file">사진 추가</label><input id="a-file" type="file" accept="image/*" multiple hidden></div>' : "") +
@@ -564,19 +575,19 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     var h = '<div class="form"><span class="lbl">색상</span><div class="row" id="swatches">' + PRESETS.map(function (p) { return '<button type="button" class="sw" data-bg="' + p[1] + '" style="background:' + p[1] + '" aria-label="' + p[0] + '" title="' + p[0] + '" aria-pressed="false"></button>'; }).join("") + "</div>";
     COLORS.forEach(function (c) { h += '<div class="srow"><label for="c-' + c[0] + '">' + c[1] + '</label><input type="color" id="c-' + c[0] + '" data-ck="' + c[0] + '"><button type="button" class="btn small" data-reset="' + c[0] + '">기본</button></div>'; });
     h += "</div>";
-    [["tt", "큰 제목"], ["ts", "작은 제목"], ["nm", "식물 이름 (카드)"]].forEach(function (g) {
-      var k = g[0], mx = k === "tt" ? [18, 80] : k === "ts" ? [8, 28] : [10, 24];
-      h += '<div class="form sec"><span class="lbl">' + g[1] + '</span>' + (k === "nm" ? "" : '<input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">') +
+    [["tt", "큰 제목"], ["ts", "작은 제목"], ["nm", "식물 이름 (카드)"], ["ls", "이름 목록"]].forEach(function (g) {
+      var k = g[0], mx = k === "tt" ? [18, 80] : k === "ts" ? [8, 28] : k === "ls" ? [12, 32] : [10, 24];
+      h += '<div class="form sec"><span class="lbl">' + g[1] + '</span>' + (k === "nm" || k === "ls" ? "" : '<input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">') +
         '<div class="srow"><label for="t-' + k + '-font">글씨체</label><select id="t-' + k + '-font" data-tk="' + k + '" data-tf="font">' + FONTS.map(function (f) { return '<option value="' + f[0] + '">' + f[1] + "</option>"; }).join("") + "</select></div>" +
         '<div class="srow"><label for="t-' + k + '-size">크기 <b id="t-' + k + '-sv"></b></label><input type="range" id="t-' + k + '-size" data-tk="' + k + '" data-tf="size" min="' + mx[0] + '" max="' + mx[1] + '" step="1"></div>' +
-        (k === "nm" ? "" : '<div class="srow"><label for="t-' + k + '-color">글자색</label><input type="color" id="t-' + k + '-color" data-tk="' + k + '" data-tf="color"><button type="button" class="btn small" data-reset="' + k + ':color">기본</button></div>') + '</div>';
+        (k === "nm" || k === "ls" ? "" : '<div class="srow"><label for="t-' + k + '-color">글자색</label><input type="color" id="t-' + k + '-color" data-tk="' + k + '" data-tf="color"><button type="button" class="btn small" data-reset="' + k + ':color">기본</button></div>') + '</div>';
     });
     h += '<div class="row"><button type="button" class="btn small" data-reset="all">디자인 전체 초기화</button></div><p class="note">디자인 설정은 이 기기에 저장돼요. 편집을 연 상태에서 바꾸면 모든 기기에 적용돼요.</p>';
     $("#set-design").innerHTML = h;
   }
   function syncDesign() {
     COLORS.forEach(function (c) { var el = $("#c-" + c[0]); if (el && document.activeElement !== el) el.value = EFF[c[0]]; });
-    ["tt", "ts", "nm"].forEach(function (k) {
+    ["tt", "ts", "nm", "ls"].forEach(function (k) {
       var o = T[k] || {}, d = DEF[k], tx = $("#t-" + k + "-text"), fo = $("#t-" + k + "-font"), sz = $("#t-" + k + "-size"), co = $("#t-" + k + "-color");
       if (tx && document.activeElement !== tx) tx.value = o.text == null ? d.text : o.text;
       if (fo) fo.value = o.font || d.font;
@@ -705,7 +716,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   document.addEventListener("visibilitychange", function () { if (!document.hidden && state.loaded && Date.now() - lastRefresh > 8000) refresh().catch(function () {}); });
   var local = parseTheme(lsGet("plantdex.theme")) || parseTheme(lsGet("plantdex.bg"));
   if (local) T = local;
-  var v = lsGet("plantdex.view"); if (v === "group" || v === "all" || v === "gallery") state.view = v;
+  var v = lsGet("plantdex.view"); if (v === "group" || v === "all" || v === "names" || v === "gallery") state.view = v;
   applyTheme(); syncDesign(); syncLock(); render();
   (async function boot() {
     if (!urlOk()) { state.err = "아직 웹 앱 주소가 연결되지 않았어요.\nconfig.js 파일의 WEB_APP_URL에 구글 앱스 스크립트 웹 앱 URL을 붙여넣어 주세요."; render(); return; }
