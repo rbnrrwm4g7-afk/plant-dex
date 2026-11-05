@@ -68,7 +68,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .art svg, .artfill svg { width: 100%; height: 100%; display: block; }
 .artfill { display: block; width: 100%; height: 100%; }
-.nm { font-family: var(--font-display); font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; padding: 0 2px; }
+.nm { font-family: var(--nm-font, var(--font-display)); font-size: var(--nm-size, 14px); line-height: 1.3; overflow-wrap: anywhere; padding: 0 2px; }
 .nm small { display: block; font-family: var(--font-mono); font-size: 10px; opacity: .7; margin-top: 2px; }
 .grp { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
 .grp h2 { font-family: var(--font-display); font-size: 20px; margin: 0; display: flex; align-items: baseline; gap: 8px; }
@@ -123,6 +123,13 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
 .sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
 .sw[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg); }
 .lb { z-index: 30; background: rgba(6, 12, 8, .85); }
+.overlay.z2 { z-index: 25; }
+.chk { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 4px; }
+.chk li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }
+.chk li:last-child { border-bottom: 0; }
+.chk .mk { color: var(--accent); text-align: center; }
+.chk small { display: block; color: var(--muted); font-size: 12px; }
+.sum { margin: 0; overflow-wrap: anywhere; }
 .lbp { max-width: 720px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .lbp img { width: 100%; max-height: 68vh; object-fit: contain; background: var(--paper); border-radius: 4px; display: block; }
 .lbp p { margin: 0; overflow-wrap: anywhere; }
@@ -154,13 +161,20 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   <div class="panel small" role="dialog" aria-modal="true" aria-labelledby="set-title">
     <div class="sheet-bar"><h2 id="set-title">설정</h2><button type="button" class="btn small" data-act="set-close" id="set-close">닫기</button></div>
     <div class="body">
+      <div class="srow"><button type="button" class="btn" data-act="conn-open">구글 시트 연결</button><span class="note" id="conn-mini"></span></div>
       <div id="set-design" class="body" style="padding:0"></div>
-      <form class="form sec" id="lockform">
-        <span class="lbl">편집 잠금</span>
-        <p class="note" id="lock-state"></p>
-        <div class="row" id="pw-row"><input type="password" id="pw" autocomplete="current-password" placeholder="편집 비밀번호" style="flex:1 1 180px;width:auto"><button type="submit" class="btn primary small" id="pw-ok">편집 열기</button></div>
-        <div class="row" id="relock-row" hidden><button type="button" class="btn small" data-act="relock">편집 잠그기</button></div>
-      </form>
+    </div>
+  </div>
+</div>
+<div class="overlay z2" id="conn" hidden>
+  <div class="panel small" role="dialog" aria-modal="true" aria-labelledby="cn-title">
+    <div class="sheet-bar"><h2 id="cn-title">구글 시트 연결</h2><button type="button" class="btn small" data-act="conn-close" id="cn-close">닫기</button></div>
+    <div class="body">
+      <p class="sum" id="cn-sum"></p>
+      <div class="form"><span class="lbl">연결 점검</span><ul class="chk" id="cn-chk"></ul></div>
+      <div class="field"><label for="cn-url">웹앱 주소</label><input id="cn-url" type="url" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><label for="cn-pw">비밀번호</label><input id="cn-pw" type="password" autocomplete="current-password"><p class="note">Apps Script 맨 위 EDIT_PASSWORD에 적은 것과 같아야 해요.</p></div>
+      <div class="row"><button type="button" class="btn danger" data-act="conn-cut">연결 끊기</button><button type="button" class="btn primary" data-act="conn-sync" id="cn-sync" style="flex:1">시트와 맞추기</button></div>
     </div>
   </div>
 </div>
@@ -174,7 +188,10 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   var $ = function (s) { return document.querySelector(s); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var CFG = window.PLANT_CONFIG || {};
-  var URL_OK = /^https:\/\/script\.google\.com\/.+\/exec/.test(CFG.WEB_APP_URL || "");
+  var ALBUM = "__album__";
+  var URL_RE = /^https:\/\/script\.google\.com\/.+\/exec/;
+  function webUrl() { return lsGet("plantdex.url") || CFG.WEB_APP_URL || ""; }
+  function urlOk() { return URL_RE.test(webUrl()); }
   var DEFAULT_BG = "#F6F1E3";
   var PRESETS = [["종이", "#F6F1E3"], ["이슬", "#E3EBE0"], ["안개", "#E3E9EF"], ["연보라", "#EAE5F0"], ["살구", "#F2E5DD"], ["숲", "#16241B"], ["먹", "#1E2023"]];
   var FONTS = [
@@ -184,11 +201,11 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     ["gaegu", "개구쟁이", '"Gaegu",cursive', 700], ["jua", "주아", '"Jua",sans-serif', 400], ["song", "송명", '"Song Myung",serif', 400],
     ["plex", "IBM 플렉스", '"IBM Plex Sans KR",sans-serif', 600], ["mono", "모노 (영문 추천)", '"IBM Plex Mono",ui-monospace,monospace', 500]
   ];
-  var DEF = { tt: { text: "나의 식물 도감", font: "gowun", size: 40 }, ts: { text: "MY PLANT COLLECTION", font: "mono", size: 11 } };
+  var DEF = { tt: { text: "나의 식물 도감", font: "gowun", size: 40 }, ts: { text: "MY PLANT COLLECTION", font: "mono", size: 11 }, nm: { font: "gowun", size: 14 } };
   var COLORS = [["bg", "전체 배경"], ["plate", "식물 카드 배경"], ["plateline", "카드 테두리"], ["tab", "메뉴 탭"], ["tabon", "선택된 메뉴 탭"]];
 
   var state = { plants: [], loaded: false, err: "", view: "all", openId: null, mode: "view", confirm: null, pendingFile: null, busy: false, lb: null, gl: null, apiId: "" };
-  var unlocked = false, pw = "", sheetTheme = null, lastFocus = null, T = {}, EFF = {}, galItems = [], remoteTimer = 0;
+  var unlocked = false, pw = "", sheetTheme = null, lastFocus = null, T = {}, EFF = {}, galItems = [], remoteTimer = 0, albumPlant = null, serverAt = 0, lastRefresh = 0;
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -196,12 +213,12 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
 
   /* ---------- 서버 ---------- */
   async function loadList() {
-    var j = await (await fetch(CFG.WEB_APP_URL + "?action=list")).json();
+    var j = await (await fetch(webUrl() + "?action=list")).json();
     if (!j.ok) throw new Error(j.error || "목록을 불러오지 못했어요.");
     return j;
   }
   async function api(action, payload) {
-    var j = await (await fetch(CFG.WEB_APP_URL, { method: "POST", body: JSON.stringify(Object.assign({ action: action, password: pw }, payload || {})) })).json();
+    var j = await (await fetch(webUrl(), { method: "POST", body: JSON.stringify(Object.assign({ action: action, password: pw }, payload || {})) })).json();
     if (!j.ok) {
       if (j.code === "bad_password") { unlocked = false; lsDel("plantdex.pw"); pw = ""; syncLock(); render(); }
       throw new Error(j.error || "요청에 실패했어요.");
@@ -234,6 +251,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     set("--accent", accent); set("--accent-fg", ink(accent)); set("--tint", mix(accent, bg, 0.14)); set("--danger", dark ? "#F0A093" : "#A8382B");
     set("--plate", plate); set("--platefg", platefg); set("--plateline", plateline);
     set("--tab", tab); set("--tabfg", ink(tab)); set("--tabon", tabon); set("--tabonfg", ink(tabon));
+    var nmo = T.nm || {}; set("--nm-font", fontOf(nmo.font || DEF.nm.font)[2]); set("--nm-size", (Number(nmo.size) || DEF.nm.size) + "px");
     s.colorScheme = dark ? "dark" : "light";
     ["tt", "ts"].forEach(function (k) {
       var o = T[k] || {}, d = DEF[k], f = fontOf(o.font || d.font), el = $(k === "tt" ? "#t-main" : "#t-sub");
@@ -245,11 +263,31 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
       el.style.color = c; EFF[k + "color"] = c;
     });
   }
+  function isPending() { return (T._at || 0) > serverAt; }
+  async function pushTheme() {
+    var at = T._at || 0;
+    try { await api("setBg", { bg: JSON.stringify(T) }); serverAt = Math.max(serverAt, at); lsSet("plantdex.synced", String(Date.now())); } catch (e) {}
+    renderConn();
+  }
   function persist() {
-    lsSet("plantdex.theme", JSON.stringify(T));
-    if (unlocked) { clearTimeout(remoteTimer); remoteTimer = setTimeout(function () { api("setBg", { bg: JSON.stringify(T) }).catch(function () {}); }, 700); }
+    T._at = Date.now(); lsSet("plantdex.theme", JSON.stringify(T));
+    if (unlocked) { clearTimeout(remoteTimer); remoteTimer = setTimeout(pushTheme, 700); } else renderConn();
   }
   function themeChanged() { applyTheme(); persist(); syncDesign(); render(); }
+  function mergeTheme(S) {
+    serverAt = (S && S._at) || 0;
+    if (S && ((S._at || 0) > (T._at || 0) || Object.keys(T).length === 0)) { T = S; lsSet("plantdex.theme", JSON.stringify(T)); applyTheme(); syncDesign(); }
+    else if (unlocked && isPending()) pushTheme();
+  }
+  async function refresh() {
+    var j = await loadList(); lastRefresh = Date.now();
+    albumPlant = null;
+    state.plants = (j.plants || []).filter(function (p) { if (p.group === ALBUM) { albumPlant = p; return false; } return true; });
+    state.loaded = true; state.err = "";
+    lsSet("plantdex.synced", String(Date.now()));
+    mergeTheme(parseTheme((j.settings || {}).bg));
+    render(); if (!$("#sheet").hidden && state.mode === "view") renderSheet(); renderConn();
+  }
 
   /* ---------- 나뭇잎 그림 (사진 없는 식물) ---------- */
   var TYPES = ["ovate", "long", "ginkgo", "fern", "serr", "round", "heart", "flower", "twig"];
@@ -315,12 +353,13 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   function fullName(p) { var g = p.group || ""; return (!g || g === "기타" || (p.name || "").indexOf(g) === 0) ? p.name : g + " " + p.name; }
   function cur() { for (var i = 0; i < state.plants.length; i++) if (state.plants[i].id === state.openId) return state.plants[i]; return null; }
   function putPlant(p) {
+    if (p.group === ALBUM) { albumPlant = p; return; }
     var found = false;
     state.plants = state.plants.map(function (x) { if (x.id === p.id) { found = true; return p; } return x; });
     if (!found) state.plants.push(p);
     state.plants.sort(function (a, b) { return a.no - b.no; });
   }
-  function updateLock() { document.documentElement.classList.toggle("lock", !$("#sheet").hidden || !$("#settings").hidden || !$("#lightbox").hidden); }
+  function updateLock() { document.documentElement.classList.toggle("lock", !$("#sheet").hidden || !$("#settings").hidden || !$("#conn").hidden || !$("#lightbox").hidden); }
 
   /* ---------- 사진 업로드 ---------- */
   async function prepare(file) {
@@ -342,12 +381,8 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   /* ---------- 목록 ---------- */
   function cell(p, full) { return '<button type="button" class="cell" data-open="' + esc(p.id) + '"><span class="art">' + photoOrArt(p.photo, p.id, 400) + '</span><span class="nm">' + esc(full ? fullName(p) : p.name) + "</span></button>"; }
   function buildGallery() {
-    var items = [];
-    state.plants.forEach(function (p) {
-      if (p.photo) items.push({ file: p.photo, pid: p.id, name: fullName(p), date: "", note: "대표 사진" });
-      (p.growth || []).forEach(function (g) { items.push({ file: g.file, pid: p.id, name: fullName(p), date: g.date || "", note: g.note || "" }); });
-    });
-    items.sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || a.name.localeCompare(b.name); });
+    var items = albumPlant ? (albumPlant.growth || []).slice().reverse() : [];
+    items.sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
     return items;
   }
   function render() {
@@ -356,8 +391,9 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     if (state.view === "gallery") {
       galItems = buildGallery();
       $("#count").textContent = state.loaded ? "사진 " + galItems.length + "장" : "";
-      html = '<div class="grid">' + galItems.map(function (g, k) { return '<button type="button" class="cell" data-gal="' + k + '"><span class="art sq"><img src="' + imgUrl(g.file, 400) + '" alt="' + esc(g.name) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="' + esc(g.pid) + '"></span><span class="nm">' + esc(g.name) + (g.date ? "<small>" + fmtDate(g.date) + "</small>" : "") + "</span></button>"; }).join("") + "</div>";
-      msg = state.err || (!state.loaded ? "도감을 불러오는 중이에요." : (!galItems.length ? "아직 올린 사진이 없어요.\n식물을 눌러 대표 사진이나 성장 사진을 추가해 보세요." : ""));
+      html = (unlocked ? '<div class="g-add" style="margin-bottom:14px"><input id="a-date" type="date" value="' + today() + '" aria-label="촬영한 날짜"><input id="a-note" type="text" placeholder="메모 (선택)" aria-label="사진 메모" autocomplete="off"><label class="btn primary" for="a-file">사진 추가</label><input id="a-file" type="file" accept="image/*" multiple hidden></div>' : "") +
+        '<div class="grid">' + galItems.map(function (g, k) { return '<button type="button" class="cell" data-gal="' + k + '"><span class="art sq"><img src="' + imgUrl(g.file, 400) + '" alt="' + esc(g.note || "사진") + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="' + esc(g.id) + '"></span><span class="nm">' + esc(g.note || fmtDate(g.date) || "사진") + (g.note && g.date ? "<small>" + fmtDate(g.date) + "</small>" : "") + "</span></button>"; }).join("") + "</div>";
+      msg = state.err || (!state.loaded ? "도감을 불러오는 중이에요." : (!galItems.length ? (unlocked ? "사진첩이 비어 있어요.\n위의 ‘사진 추가’로 사진을 올려 보세요." : "사진첩이 비어 있어요.\n설정 > 구글 시트 연결에서 편집을 열면 사진을 올릴 수 있어요.") : ""));
     } else {
       $("#count").textContent = state.loaded ? "총 " + n + "종" : "";
       if (state.view === "all") html = '<div class="grid">' + state.plants.map(function (p) { return cell(p, true); }).join("") + "</div>";
@@ -378,7 +414,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     var g = (p.growth || []).slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
     var wv = p.watered ? esc(fmtDate(p.watered)) + " (" + ago(p.watered) + ")" : '<span class="empty">기록이 없어요</span>';
     if (unlocked) wv += '<div class="row" style="margin-top:6px"><button type="button" class="btn small" data-act="water">오늘 물 줬어요</button></div>';
-    var h = '<div class="sheet-bar"><span class="note">No. ' + String(p.no || 0).padStart(2, "0") + " · " + esc(p.group || "기타") + '</span><button type="button" class="btn small" data-act="close" id="sheet-close">닫기</button></div><div class="body"><div class="top2"><div class="info"><span class="ph">' + photoOrArt(p.photo, p.id, 900) + "</span>" +
+    var h = '<div class="sheet-bar"><span class="note">No. ' + String(state.plants.indexOf(p) + 1).padStart(2, "0") + " · " + esc(p.group || "기타") + '</span><button type="button" class="btn small" data-act="close" id="sheet-close">닫기</button></div><div class="body"><div class="top2"><div class="info"><span class="ph">' + photoOrArt(p.photo, p.id, 900) + "</span>" +
       (unlocked ? '<div><label class="btn small" for="up-main">대표 사진 바꾸기</label><input id="up-main" type="file" accept="image/*" hidden></div>' : "") + '</div><div class="info"><h2 id="sheet-title">' + esc(fullName(p)) + "</h2>" +
       '<dl class="care"><div><dt>물 준 날짜</dt><dd>' + wv + "</dd></div>" + careRow("물 주기", p.water) + careRow("햇빛", p.light) + careRow("관리 방법", p.care) + "</dl>" +
       (p.guide ? '<p class="note">기본 가이드를 먼저 채워 두었어요. 키우는 환경에 맞게 수정해 주세요.</p>' : "");
@@ -426,8 +462,9 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   function renderLb() {
     var lb = $("#lightbox"), p = cur(), it, del = "";
     if (state.gl) {
-      var g = state.gl;
-      lb.innerHTML = '<div class="panel lbp" role="dialog" aria-modal="true" aria-label="사진"><img src="' + imgUrl(g.file, 1400) + '" alt="' + esc(g.name) + '" referrerpolicy="no-referrer"><p class="note">' + esc(g.name) + (g.date ? " · " + fmtDate(g.date) : "") + "</p>" + (g.note ? "<p>" + esc(g.note) + "</p>" : "") + '<div class="row"><button type="button" class="btn small" data-act="lb-close">닫기</button><button type="button" class="btn primary small" data-act="gl-open">식물 보기</button></div></div>';
+      var g = state.gl, gd = "";
+      if (unlocked) gd = g.confirm ? '<span>이 사진을 삭제할까요?</span><button type="button" class="btn danger small" data-act="gl-del-yes">삭제</button><button type="button" class="btn small" data-act="gl-del-no">취소</button>' : '<button type="button" class="btn danger small" data-act="gl-del">삭제</button>';
+      lb.innerHTML = '<div class="panel lbp" role="dialog" aria-modal="true" aria-label="사진"><img src="' + imgUrl(g.file, 1400) + '" alt="' + esc(g.note || "사진") + '" referrerpolicy="no-referrer"><p class="note">' + (g.date ? fmtDate(g.date) : "") + "</p>" + (g.note ? "<p>" + esc(g.note) + "</p>" : "") + '<div class="row"><button type="button" class="btn small" data-act="lb-close">닫기</button>' + gd + "</div></div>";
       lb.hidden = false; updateLock(); return;
     }
     if (!state.lb || !p) { lb.hidden = true; updateLock(); return; }
@@ -483,6 +520,21 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     var p = cur(); if (!p || !state.lb) return;
     try { putPlant((await api("deleteGrowth", { plantId: p.id, growthId: state.lb.gid })).plant); state.lb = null; renderLb(); renderSheet(); render(); toast("사진을 삭제했어요"); } catch (e) { toast(e.message); }
   }
+  async function addAlbum(files) {
+    var date = ($("#a-date") && $("#a-date").value) || today(), note = ($("#a-note") && $("#a-note").value.trim()) || "", i, ok = 0;
+    try {
+      if (!albumPlant) albumPlant = (await api("save", { plant: { name: "사진첩", group: ALBUM } })).plant;
+      for (i = 0; i < files.length; i++) {
+        toast("사진을 올리는 중이에요 (" + (i + 1) + "/" + files.length + ")");
+        albumPlant = await uploadPhoto(albumPlant.id, files[i], { kind: "growth", date: date, note: note }); ok++;
+      }
+      render(); toast(ok + "장을 올렸어요");
+    } catch (e) { render(); toast(ok ? ok + "장을 올리고 멈췄어요. " + e.message : e.message); }
+  }
+  async function deleteAlbum() {
+    var g = state.gl; if (!g || !albumPlant) return;
+    try { albumPlant = (await api("deleteGrowth", { plantId: albumPlant.id, growthId: g.id })).plant; state.gl = null; renderLb(); render(); toast("사진을 삭제했어요"); } catch (e) { toast(e.message); }
+  }
   async function searchPlants() {
     var q = $("#s-q").value.trim(), box = $("#s-res");
     if (!q) { toast("검색할 식물 이름을 입력해 주세요"); return; }
@@ -512,19 +564,19 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     var h = '<div class="form"><span class="lbl">색상</span><div class="row" id="swatches">' + PRESETS.map(function (p) { return '<button type="button" class="sw" data-bg="' + p[1] + '" style="background:' + p[1] + '" aria-label="' + p[0] + '" title="' + p[0] + '" aria-pressed="false"></button>'; }).join("") + "</div>";
     COLORS.forEach(function (c) { h += '<div class="srow"><label for="c-' + c[0] + '">' + c[1] + '</label><input type="color" id="c-' + c[0] + '" data-ck="' + c[0] + '"><button type="button" class="btn small" data-reset="' + c[0] + '">기본</button></div>'; });
     h += "</div>";
-    [["tt", "큰 제목"], ["ts", "작은 제목"]].forEach(function (g) {
-      var k = g[0], mx = k === "tt" ? [18, 80] : [8, 28];
-      h += '<div class="form sec"><span class="lbl">' + g[1] + '</span><input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">' +
+    [["tt", "큰 제목"], ["ts", "작은 제목"], ["nm", "식물 이름 (카드)"]].forEach(function (g) {
+      var k = g[0], mx = k === "tt" ? [18, 80] : k === "ts" ? [8, 28] : [10, 24];
+      h += '<div class="form sec"><span class="lbl">' + g[1] + '</span>' + (k === "nm" ? "" : '<input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">') +
         '<div class="srow"><label for="t-' + k + '-font">글씨체</label><select id="t-' + k + '-font" data-tk="' + k + '" data-tf="font">' + FONTS.map(function (f) { return '<option value="' + f[0] + '">' + f[1] + "</option>"; }).join("") + "</select></div>" +
         '<div class="srow"><label for="t-' + k + '-size">크기 <b id="t-' + k + '-sv"></b></label><input type="range" id="t-' + k + '-size" data-tk="' + k + '" data-tf="size" min="' + mx[0] + '" max="' + mx[1] + '" step="1"></div>' +
-        '<div class="srow"><label for="t-' + k + '-color">글자색</label><input type="color" id="t-' + k + '-color" data-tk="' + k + '" data-tf="color"><button type="button" class="btn small" data-reset="' + k + ':color">기본</button></div></div>';
+        (k === "nm" ? "" : '<div class="srow"><label for="t-' + k + '-color">글자색</label><input type="color" id="t-' + k + '-color" data-tk="' + k + '" data-tf="color"><button type="button" class="btn small" data-reset="' + k + ':color">기본</button></div>') + '</div>';
     });
     h += '<div class="row"><button type="button" class="btn small" data-reset="all">디자인 전체 초기화</button></div><p class="note">디자인 설정은 이 기기에 저장돼요. 편집을 연 상태에서 바꾸면 모든 기기에 적용돼요.</p>';
     $("#set-design").innerHTML = h;
   }
   function syncDesign() {
     COLORS.forEach(function (c) { var el = $("#c-" + c[0]); if (el && document.activeElement !== el) el.value = EFF[c[0]]; });
-    ["tt", "ts"].forEach(function (k) {
+    ["tt", "ts", "nm"].forEach(function (k) {
       var o = T[k] || {}, d = DEF[k], tx = $("#t-" + k + "-text"), fo = $("#t-" + k + "-font"), sz = $("#t-" + k + "-size"), co = $("#t-" + k + "-color");
       if (tx && document.activeElement !== tx) tx.value = o.text == null ? d.text : o.text;
       if (fo) fo.value = o.font || d.font;
@@ -535,23 +587,57 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     for (var i = 0; i < sw.length; i++) sw[i].setAttribute("aria-pressed", sw[i].getAttribute("data-bg").toLowerCase() === EFF.bg.toLowerCase() ? "true" : "false");
   }
   function syncLock() {
-    $("#lock-state").textContent = unlocked ? "편집이 열려 있어요. 식물 추가·수정, 물 준 날짜, 사진 올리기를 할 수 있어요." : "지금은 보기 전용이에요. 식물 추가·수정, 물 준 날짜, 사진 올리기는 비밀번호를 입력하면 쓸 수 있어요.";
-    $("#pw-row").hidden = unlocked; $("#relock-row").hidden = !unlocked;
+    renderConn();
   }
   function openSettings() { lastFocus = document.activeElement; syncLock(); syncDesign(); $("#settings").hidden = false; updateLock(); $("#set-close").focus(); }
   function closeSettings() { $("#settings").hidden = true; updateLock(); if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} } }
-  async function tryUnlock(candidate) {
-    if (!candidate) { toast("비밀번호를 입력해 주세요"); return; }
-    pw = candidate; $("#pw-ok").disabled = true;
-    try { await api("check"); unlocked = true; lsSet("plantdex.pw", pw); $("#pw").value = ""; syncLock(); if (!$("#sheet").hidden) renderSheet(); toast("편집할 수 있어요"); }
-    catch (e) { pw = ""; toast(e.message); }
-    $("#pw-ok").disabled = false;
+  function connId(u) {
+    var h = 0, i; u = String(u || "").replace(/^https:\/\/script\.google\.com\/macros\/s\//, "");
+    for (i = 0; i < u.length; i++) h = (h * 31 + u.charCodeAt(i)) % 1679616;
+    return h.toString(36).toUpperCase().padStart(4, "0");
+  }
+  function fmtTime(ms) { var d = new Date(Number(ms)); return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function renderConn() {
+    var mini = $("#conn-mini"), sum = $("#cn-sum"), chk = $("#cn-chk"), pend = isPending(), sy = lsGet("plantdex.synced");
+    if (mini) mini.textContent = unlocked ? "편집 열림" : "보기 전용";
+    if (!sum) return;
+    sum.textContent = urlOk() ? "구글 시트에 연결되어 있어요." + (sy ? " 마지막으로 맞춘 때는 " + fmtTime(sy) + "이에요." : "") + (pend ? " 아직 보내지 못한 설정이 1건 있어요." : "") : "아직 웹 앱 주소가 연결되지 않았어요.";
+    var rows = [
+      ["•", "이 기기의 연결 번호: " + connId(webUrl()), "두 기기의 연결 번호가 같아야 같은 시트를 함께 써요. 다르면 웹 앱 주소를 똑같이 다시 적어 주세요."],
+      unlocked ? ["✓", "편집이 열려 있어요", ""] : ["•", "지금은 보기 전용이에요", "비밀번호를 입력하고 ‘시트와 맞추기’를 누르면 편집할 수 있어요."],
+      pend ? ["•", "아직 시트에 보내지 못한 설정이 있어요", "편집을 열고 ‘시트와 맞추기’를 눌러 주세요."] : (state.loaded ? ["✓", "시트와 맞춰져 있어요", ""] : ["•", "아직 시트와 맞추지 않았어요", "아래 ‘시트와 맞추기’를 눌러 주세요."])
+    ];
+    chk.innerHTML = rows.map(function (r) { return '<li><span class="mk">' + r[0] + "</span><span><b>" + esc(r[1]) + "</b>" + (r[2] ? "<small>" + esc(r[2]) + "</small>" : "") + "</span></li>"; }).join("");
+  }
+  function openConn() { lastFocus = document.activeElement; $("#cn-url").value = webUrl(); renderConn(); $("#conn").hidden = false; updateLock(); $("#cn-close").focus(); }
+  function closeConn() { $("#conn").hidden = true; updateLock(); if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} } }
+  async function syncNow() {
+    var u = $("#cn-url").value.trim(), p = $("#cn-pw").value, btn = $("#cn-sync");
+    if (u && u !== webUrl()) { if (!URL_RE.test(u)) { toast("웹 앱 주소가 올바르지 않아요"); return; } lsSet("plantdex.url", u); }
+    btn.disabled = true;
+    try {
+      if (p) {
+        pw = p;
+        try { await api("check"); unlocked = true; lsSet("plantdex.pw", pw); $("#cn-pw").value = ""; }
+        catch (e) { pw = ""; unlocked = false; toast(e.message); btn.disabled = false; renderConn(); return; }
+      }
+      await refresh();
+      if (unlocked && isPending()) await pushTheme();
+      renderConn(); if (!$("#sheet").hidden) renderSheet();
+      toast(unlocked ? "시트와 맞췄어요. 편집할 수 있어요" : "시트와 맞췄어요. 보기 전용이에요");
+    } catch (e) { toast(e.message); }
+    btn.disabled = false;
+  }
+  function connCut() {
+    unlocked = false; pw = ""; lsDel("plantdex.pw"); lsDel("plantdex.url"); lsDel("plantdex.synced");
+    $("#cn-url").value = webUrl(); render(); if (!$("#sheet").hidden) renderSheet(); renderConn();
+    toast("이 기기에 저장된 비밀번호와 주소 설정을 지웠어요");
   }
 
   /* ---------- 이벤트 ---------- */
   document.addEventListener("click", function (e) {
     var t = e.target.closest("[data-open],[data-view],[data-act],[data-gid],[data-gal],[data-bg],[data-pick],[data-reset]");
-    if (!t) { if (e.target.id === "sheet") closeSheet(); else if (e.target.id === "settings") closeSettings(); else if (e.target.id === "lightbox") { state.lb = null; state.gl = null; renderLb(); } return; }
+    if (!t) { if (e.target.id === "sheet") closeSheet(); else if (e.target.id === "conn") closeConn(); else if (e.target.id === "settings") closeSettings(); else if (e.target.id === "lightbox") { state.lb = null; state.gl = null; renderLb(); } return; }
     if (t.hasAttribute("data-open")) return openSheet(t.getAttribute("data-open"), "view");
     if (t.hasAttribute("data-view")) { state.view = t.getAttribute("data-view"); lsSet("plantdex.view", state.view); return render(); }
     if (t.hasAttribute("data-gid")) { state.lb = { gid: t.getAttribute("data-gid"), confirm: false }; return renderLb(); }
@@ -566,7 +652,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     var a = t.getAttribute("data-act");
     if (a === "settings") openSettings();
     else if (a === "set-close") closeSettings();
-    else if (a === "new") { if (!URL_OK || !state.loaded) toast("도감이 아직 연결되지 않았어요"); else if (!unlocked) { toast("식물을 추가하려면 편집 비밀번호가 필요해요"); openSettings(); } else openSheet(null, "new"); }
+    else if (a === "new") { if (!urlOk() || !state.loaded) toast("도감이 아직 연결되지 않았어요"); else if (!unlocked) { toast("식물을 추가하려면 시트 연결에서 비밀번호를 입력해 주세요"); openConn(); } else openSheet(null, "new"); }
     else if (a === "close") closeSheet();
     else if (a === "edit") openSheet(state.openId, "edit");
     else if (a === "cancel") { if (state.mode === "new") closeSheet(); else { state.mode = "view"; state.pendingFile = null; renderSheet(); } }
@@ -576,16 +662,22 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
     else if (a === "water") waterToday();
     else if (a === "search") searchPlants();
     else if (a === "lb-close") { state.lb = null; state.gl = null; renderLb(); }
-    else if (a === "gl-open") { var id = state.gl && state.gl.pid; state.gl = null; renderLb(); if (id) openSheet(id, "view"); }
+    else if (a === "gl-del") { state.gl.confirm = true; renderLb(); }
+    else if (a === "gl-del-no") { state.gl.confirm = false; renderLb(); }
+    else if (a === "gl-del-yes") deleteAlbum();
     else if (a === "lb-del") { state.lb.confirm = true; renderLb(); }
     else if (a === "lb-del-no") { state.lb.confirm = false; renderLb(); }
     else if (a === "lb-del-yes") deleteGrowth();
-    else if (a === "relock") { unlocked = false; pw = ""; lsDel("plantdex.pw"); syncLock(); render(); if (!$("#sheet").hidden) renderSheet(); toast("편집을 잠갔어요"); }
+    else if (a === "conn-open") openConn();
+    else if (a === "conn-close") closeConn();
+    else if (a === "conn-sync") syncNow();
+    else if (a === "conn-cut") connCut();
   });
   document.addEventListener("change", function (e) {
     var t = e.target, f = t.files && t.files[0];
     if (t.id === "up-main" && f) { setMainPhoto(f); t.value = ""; }
     else if (t.id === "g-file" && f) { addGrowth(f); t.value = ""; }
+    else if (t.id === "a-file" && t.files.length) { addAlbum(Array.prototype.slice.call(t.files)); t.value = ""; }
     else if (t.id === "f-photo" && f) { state.pendingFile = f; $("#f-photo-name").textContent = f.name; $("#f-prev").innerHTML = '<img src="' + URL.createObjectURL(f) + '" alt="">'; }
   });
   document.addEventListener("input", function (e) {
@@ -598,32 +690,31 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
   });
   document.addEventListener("submit", function (e) {
     if (e.target.id === "plant-form") { e.preventDefault(); savePlant(); }
-    else if (e.target.id === "lockform") { e.preventDefault(); tryUnlock($("#pw").value); }
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && e.target.id === "s-q") { e.preventDefault(); searchPlants(); return; }
     if (e.key !== "Escape") return;
     if (!$("#lightbox").hidden) { state.lb = null; state.gl = null; renderLb(); }
+    else if (!$("#conn").hidden) closeConn();
     else if (!$("#settings").hidden) closeSettings();
     else if (!$("#sheet").hidden) closeSheet();
   });
 
   /* ---------- 시작 ---------- */
   buildDefs(); buildDesign();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && state.loaded && Date.now() - lastRefresh > 8000) refresh().catch(function () {}); });
   var local = parseTheme(lsGet("plantdex.theme")) || parseTheme(lsGet("plantdex.bg"));
   if (local) T = local;
   var v = lsGet("plantdex.view"); if (v === "group" || v === "all" || v === "gallery") state.view = v;
   applyTheme(); syncDesign(); syncLock(); render();
   (async function boot() {
-    if (!URL_OK) { state.err = "아직 웹 앱 주소가 연결되지 않았어요.\nconfig.js 파일의 WEB_APP_URL에 구글 앱스 스크립트 웹 앱 URL을 붙여넣어 주세요."; render(); return; }
+    if (!urlOk()) { state.err = "아직 웹 앱 주소가 연결되지 않았어요.\nconfig.js 파일의 WEB_APP_URL에 구글 앱스 스크립트 웹 앱 URL을 붙여넣어 주세요."; render(); return; }
     try {
-      var j = await loadList(); state.plants = j.plants || []; state.loaded = true;
-      sheetTheme = parseTheme((j.settings || {}).bg);
-      if (!local && sheetTheme) { T = sheetTheme; applyTheme(); syncDesign(); }
+      await refresh();
       render();
     } catch (e) { state.err = "도감을 불러오지 못했어요.\n웹 앱 URL과 배포 설정(액세스: 모든 사용자)을 확인해 주세요.\n" + e.message; render(); return; }
     var saved = lsGet("plantdex.pw");
-    if (saved) { pw = saved; try { await api("check"); unlocked = true; syncLock(); } catch (e) { pw = ""; } }
+    if (saved) { pw = saved; try { await api("check"); unlocked = true; syncLock(); render(); if (isPending()) pushTheme(); } catch (e) { pw = ""; } }
   })();
 })();
 </script>
