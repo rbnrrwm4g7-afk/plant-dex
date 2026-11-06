@@ -51,6 +51,11 @@ button { font: inherit; color: inherit; }
 #bgtx { background-image: var(--tx-img, none); background-size: var(--tx-size, auto); opacity: var(--tx-op, 0); }
 .bgpick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .bgp { aspect-ratio: 1; padding: 0; border: 2px solid var(--line); background: var(--card); overflow: hidden; border-radius: 4px; cursor: pointer; font-size: 11px; color: var(--fg); }
+.scat { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+#settings [data-cat][hidden] { display: none !important; }
+.artpick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
+.artpick .bgp { width: 100%; display: block; }
+.artpick .bgp svg { width: 100%; height: 100%; display: block; }
 .bgp img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bgp[aria-pressed="true"] { border-color: var(--fg); }
 .galwrap { background: var(--albg, transparent); padding: 12px; border-radius: 6px; min-height: 160px; }
@@ -193,17 +198,18 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   <div class="panel small" role="dialog" aria-modal="true" aria-labelledby="set-title">
     <div class="sheet-bar"><h2 id="set-title">설정</h2><button type="button" class="btn small" data-act="set-close" id="set-close">닫기</button></div>
     <div class="body">
-      <div class="srow"><button type="button" class="btn" data-act="conn-open">구글 시트 연결</button><span class="note" id="conn-mini"></span></div>
+      <div class="srow" data-cat="data"><button type="button" class="btn" data-act="conn-open">구글 시트 연결</button><span class="note" id="conn-mini"></span></div>
       <div id="pv" aria-label="미리보기"><h2 class="pvt" id="pv-main"></h2><p id="pv-sub"></p>
         <div class="pvr"><span class="mt" style="cursor:default">식물 추가</span><span class="mt" style="cursor:default">사진첩</span></div>
         <div class="pvr"><span class="mt" aria-pressed="true" style="cursor:default">전체 목록</span><span class="mt" style="cursor:default">종류별</span><span class="mt" style="cursor:default">이름 목록</span><span class="count">총 50종</span></div>
         <div class="pvc"><div class="cell"><span class="art" id="pv-art"></span><span class="nm">몬스테라</span></div><ol class="names"><li><button type="button" tabindex="-1"><span class="no">01.</span><span class="nn">아스파라거스</span></button></li><li><button type="button" tabindex="-1"><span class="no">02.</span><span class="nn">몬스테라 히메</span></button></li></ol></div>
       </div>
+      <div class="scat" role="tablist" aria-label="설정 분류"><button type="button" class="mt" data-scat="color" aria-pressed="true">색상</button><button type="button" class="mt" data-scat="bg" aria-pressed="false">배경</button><button type="button" class="mt" data-scat="font" aria-pressed="false">글씨</button><button type="button" class="mt" data-scat="card" aria-pressed="false">카드·탭</button><button type="button" class="mt" data-scat="data" aria-pressed="false">연결·백업</button></div>
       <div id="set-design" class="body" style="padding:0"></div>
-      <div class="form sec"><span class="lbl">백업·내보내기</span><div class="row"><button type="button" class="btn small" data-act="bk-json">전체 백업 (JSON)</button><button type="button" class="btn small" data-act="bk-csv">식물 목록 (엑셀용 CSV)</button></div>
+      <div class="form sec" data-cat="data"><span class="lbl">백업·내보내기</span><div class="row"><button type="button" class="btn small" data-act="bk-json">전체 백업 (JSON)</button><button type="button" class="btn small" data-act="bk-csv">식물 목록 (엑셀용 CSV)</button></div>
         <div class="row"><label class="btn small" for="bk-file">백업 파일에서 불러오기</label><input type="file" id="bk-file" accept=".json,application/json" hidden></div><div id="bk-msg" class="note" hidden></div><p class="note">식물 정보, 사진첩 목록, 디자인 설정이 파일로 저장돼요. 사진 자체는 구글 드라이브의 ‘식물 도감 사진’ 폴더에 있고, 파일에는 사진 링크가 들어가요. 아이폰에서는 공유 창에서 ‘파일에 저장’을 고르세요.</p></div>
-      <div class="form sec"><span class="lbl">공유 링크</span><div class="row"><input id="site-link" readonly aria-label="웹 링크" style="flex:1 1 200px;width:auto"><button type="button" class="btn small" data-act="copy-link">복사</button><a class="btn small" id="site-open" target="_blank" rel="noopener">열기</a></div><p class="note">이 링크로 사파리 앱이나 다른 브라우저에서도 열 수 있어요. 링크를 받은 사람은 보기만 할 수 있고, 설정을 저장하려면 편집 비밀번호가 필요해요.</p></div>
-      <div class="form sec"><span class="lbl">편집 비밀번호 변경</span><input type="password" id="nw-pw" autocomplete="new-password" placeholder="새 비밀번호 (바꿀 때만 입력)"><span class="lbl">농사로 인증키</span><input type="password" id="nw-key" autocomplete="off" placeholder="새 인증키 (바꿀 때만 입력)"><p class="note">비밀번호와 인증키는 구글 시트의 앱스 스크립트에 저장돼요. 화면에는 다시 보이지 않아요.</p></div>
+      <div class="form sec" data-cat="data"><span class="lbl">공유 링크</span><div class="row"><input id="site-link" readonly aria-label="웹 링크" style="flex:1 1 200px;width:auto"><button type="button" class="btn small" data-act="copy-link">복사</button><a class="btn small" id="site-open" target="_blank" rel="noopener">열기</a></div><p class="note">이 링크로 사파리 앱이나 다른 브라우저에서도 열 수 있어요. 링크를 받은 사람은 보기만 할 수 있고, 설정을 저장하려면 편집 비밀번호가 필요해요.</p></div>
+      <div class="form sec" data-cat="data"><span class="lbl">편집 비밀번호 변경</span><input type="password" id="nw-pw" autocomplete="new-password" placeholder="새 비밀번호 (바꿀 때만 입력)"><span class="lbl">농사로 인증키</span><input type="password" id="nw-key" autocomplete="off" placeholder="새 인증키 (바꿀 때만 입력)"><p class="note">비밀번호와 인증키는 구글 시트의 앱스 스크립트에 저장돼요. 화면에는 다시 보이지 않아요.</p></div>
       <div id="sv-bar"><input type="password" id="sv-pw" autocomplete="current-password" placeholder="편집 비밀번호를 입력하고 저장" aria-label="편집 비밀번호"><div class="row"><button type="button" class="btn small" data-act="set-revert">되돌리기</button><button type="button" class="btn primary small" id="sv-ok" data-act="set-save" style="flex:1">저장</button></div></div>
     </div>
   </div>
@@ -266,7 +272,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
 
   /* ---------- 서버 ---------- */
   async function loadList() {
-    var j = await (await fetch(webUrl() + "?action=list")).json();
+    var j = await (await fetch(webUrl() + "?action=list&t=" + Date.now(), { cache: "no-store" })).json();
     if (!j.ok) throw new Error(j.error || "목록을 불러오지 못했어요.");
     return j;
   }
@@ -343,7 +349,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
       if (pe) { pe.textContent = txt; pe.hidden = !txt; pe.style.cssText = el.style.cssText; pe.style.fontSize = Math.min(Number(o.size) || d.size, k === "tt" ? 26 : 11) + "px"; }
     });
   }
-  function isPending() { return (T._at || 0) > serverAt; }
+  function isPending() { return false; }
   async function pushTheme() {
     var at = T._at || 0;
     try { await api("setBg", { bg: JSON.stringify(T) }); serverAt = Math.max(serverAt, at); lsSet("plantdex.synced", String(Date.now())); } catch (e) {}
@@ -416,8 +422,8 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
       try { await api("check"); } catch (e) { pw = oldpw; unlocked = was; throw e; }
       unlocked = true;
       if (dirty) {
-        clearTimeout(remoteTimer); T._at = Date.now(); lsSet("plantdex.theme", JSON.stringify(T));
-        await api("setBg", { bg: JSON.stringify(T) }); serverAt = T._at; lsSet("plantdex.synced", String(Date.now()));
+        clearTimeout(remoteTimer); T._at = Date.now();
+        await api("setBg", { bg: JSON.stringify(T) }); lsSet("plantdex.theme", JSON.stringify(T)); serverAt = T._at; lsSet("plantdex.synced", String(Date.now()));
         dirty = false; snap = JSON.stringify(T);
       }
       if (np || nk) {
@@ -432,8 +438,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   function mergeTheme(S) {
     serverAt = (S && S._at) || 0;
     if (dirty) return;
-    if (S && ((S._at || 0) > (T._at || 0) || Object.keys(T).length === 0)) { T = S; lsSet("plantdex.theme", JSON.stringify(T)); applyTheme(); syncDesign(); }
-    else if (unlocked && isPending()) pushTheme();
+    if (S && Object.keys(S).length) { T = S; lsSet("plantdex.theme", JSON.stringify(T)); applyTheme(); syncDesign(); }
   }
   async function refresh() {
     var j = await loadList(); lastRefresh = Date.now();
@@ -451,9 +456,9 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   var PAL = ["#4d5d2a", "#3d4d28", "#5e6a34", "#6b6a38", "#7c5b2b", "#58402a", "#46532f", "#3a4838", "#716033", "#5b4a2a"];
   var SLOTS = [[22, 24, 1], [66, 22, 1], [44, 60, 1.5], [18, 92, 1], [70, 90, 1], [46, 108, .8]];
   function buildDefs() {
-    var S = 'fill="currentColor" fill-opacity=".62" stroke="currentColor" stroke-width=".5" stroke-linejoin="round" stroke-linecap="round"';
-    var V = 'fill="none" stroke="#17140c" stroke-width=".28" stroke-opacity=".6" stroke-linecap="round"';
-    var n = function (x) { return x.toFixed(1); }, d = "", i;
+    var d = "";
+    function gen(pre, S, V) {
+    var n = function (x) { return x.toFixed(1); }, i;
     function wid(W, o, t) {
       var w = W * Math.pow(Math.sin(Math.PI * Math.pow(t, o.sk || 1)), o.sp || .8);
       if (o.lobes) w *= .6 + .4 * Math.abs(Math.cos(Math.PI * o.lobes * t));
@@ -469,22 +474,25 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
           v += "M" + n(sg * w * .3) + " " + n(y - L * .008) + "L" + n(sg * w * .42) + " " + n(y - L * .05) + "M" + n(sg * w * .62) + " " + n(y - L * .03) + "L" + n(sg * w * .7) + " " + n(y - L * .07);
         });
       }
-      d += '<g id="lf-' + id + '"><path ' + S + ' d="M' + R.join("L") + "L" + Lf.reverse().join("L") + 'Z"/><path ' + V + ' d="' + v + '"/></g>';
+      d += '<g id="' + pre + '-' + id + '"><path ' + S + ' d="M' + R.join("L") + "L" + Lf.reverse().join("L") + 'Z"/><path ' + V + ' d="' + v + '"/></g>';
     }
     leaf("ovate", 50, 15, { pairs: 9 }); leaf("long", 68, 7.5, { pairs: 14, sp: .9 }); leaf("serr", 50, 15, { pairs: 10, ser: 1.7 });
     leaf("oak", 58, 15, { pairs: 7, lobes: 3.5, sp: .7 }); leaf("tear", 46, 17, { pairs: 8, sk: .7 });
-    d += '<g id="lf-ginkgo"><path ' + S + ' d="M0 26L-.8 10C-20 8-24 -12-14 -20C-8 -16-4 -18 0 -13C4 -18 8 -16 14 -20C24 -12 20 8 .8 10Z"/><path ' + V + ' d="M0 10L-18 -4M0 10L-17 -9M0 10L-14 -14M0 10L-9 -16M0 10L-4.5 -15M0 10L0 -12M0 10L4.5 -15M0 10L9 -16M0 10L14 -14M0 10L17 -9M0 10L18 -4M0 10L-12 -2M0 10L12 -2"/><path ' + V + ' d="M0 10V34"/></g>';
+    d += '<g id="' + pre + '-ginkgo"><path ' + S + ' d="M0 26L-.8 10C-20 8-24 -12-14 -20C-8 -16-4 -18 0 -13C4 -18 8 -16 14 -20C24 -12 20 8 .8 10Z"/><path ' + V + ' d="M0 10L-18 -4M0 10L-17 -9M0 10L-14 -14M0 10L-9 -16M0 10L-4.5 -15M0 10L0 -12M0 10L4.5 -15M0 10L9 -16M0 10L14 -14M0 10L17 -9M0 10L18 -4M0 10L-12 -2M0 10L12 -2"/><path ' + V + ' d="M0 10V34"/></g>';
     var f = '<path ' + V + ' d="M0 36C1 12 -1 -12 0 -34"/>';
     for (i = 0; i < 18; i++) {
       var y = -31 + i * 3.6, l = 3 + 8 * Math.sin(Math.PI * (i + .6) / 18.6);
       [-1, 1].forEach(function (sg) { f += '<path ' + S + ' d="M0 ' + n(y) + "Q" + n(sg * l * .6) + " " + n(y - 2.6) + " " + n(sg * l) + " " + n(y - 2.4) + "Q" + n(sg * l * .5) + " " + n(y + .6) + " 0 " + n(y + 1.4) + 'Z"/>'; });
     }
-    d += '<g id="lf-fern">' + f + "</g>";
+    d += '<g id="' + pre + '-fern">' + f + "</g>";
     var mp = [], mv = "M0 4V30", k, a, rr;
     for (k = 0; k < 10; k++) { a = -Math.PI / 2 + k * Math.PI / 5 + Math.PI / 10 * 0; rr = k % 2 ? 9 : 26; mp.push(n(rr * Math.cos(a)) + " " + n(rr * Math.sin(a) - 2)); if (!(k % 2)) { mv += "M0 -2L" + n(24 * Math.cos(a)) + " " + n(24 * Math.sin(a) - 2); } }
-    d += '<g id="lf-maple"><path ' + S + ' d="M' + mp.join("L") + 'Z"/><path ' + V + ' d="' + mv + '"/></g>';
-    d += '<g id="lf-round"><ellipse ' + S + ' rx="15" ry="16" cy="-6"/><path ' + V + ' d="M0 -22V32M0 -12L7 -16M0 -4L10 -10M0 4L9 -1M0 -12L-7 -16M0 -4L-10 -10M0 4L-9 -1"/></g>';
-    d += '<g id="lf-heart"><path ' + S + ' d="M0 18C-20 6-18 -14-6 -14C-2 -14 0 -11 0 -8C0 -11 2 -14 6 -14C18 -14 20 6 0 18Z"/><path ' + V + ' d="M0 18V-8M0 10L-9 2M0 10L9 2M0 2L-9 -6M0 2L9 -6M0 -4L-6 -10M0 -4L6 -10M0 18V30"/></g>';
+    d += '<g id="' + pre + '-maple"><path ' + S + ' d="M' + mp.join("L") + 'Z"/><path ' + V + ' d="' + mv + '"/></g>';
+    d += '<g id="' + pre + '-round"><ellipse ' + S + ' rx="15" ry="16" cy="-6"/><path ' + V + ' d="M0 -22V32M0 -12L7 -16M0 -4L10 -10M0 4L9 -1M0 -12L-7 -16M0 -4L-10 -10M0 4L-9 -1"/></g>';
+    d += '<g id="' + pre + '-heart"><path ' + S + ' d="M0 18C-20 6-18 -14-6 -14C-2 -14 0 -11 0 -8C0 -11 2 -14 6 -14C18 -14 20 6 0 18Z"/><path ' + V + ' d="M0 18V-8M0 10L-9 2M0 10L9 2M0 2L-9 -6M0 2L9 -6M0 -4L-6 -10M0 -4L6 -10M0 18V30"/></g>';
+    }
+    gen("lf", 'fill="currentColor" fill-opacity=".62" stroke="currentColor" stroke-width=".5" stroke-linejoin="round" stroke-linecap="round"', 'fill="none" stroke="#17140c" stroke-width=".28" stroke-opacity=".6" stroke-linecap="round"');
+    gen("ll", 'fill="none" stroke="currentColor" stroke-width=".55" stroke-linejoin="round" stroke-linecap="round"', 'fill="none" stroke="currentColor" stroke-width=".3" stroke-opacity=".85" stroke-linecap="round"');
     document.body.insertAdjacentHTML("afterbegin", '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' + d + "</defs></svg>");
   }
   function rng(s) {
@@ -492,7 +500,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     for (i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     return function () { h += 0x6D2B79F5; var t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   }
-  function art(seed) {
+  function artPress(seed) {
     var r = rng(String(seed || "x")), out = '<svg viewBox="0 0 90 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="90" height="120" fill="#DDD3BB"/>', i;
     for (i = 0; i < SLOTS.length; i++) {
       var sl = SLOTS[i], ty = TYPES[Math.floor(r() * TYPES.length)], sc = sl[2] * (.6 + r() * .25) * 1;
@@ -501,6 +509,42 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     }
     return out + "</svg>";
   }
+  var ART_STYLES = [["press", "눌러 말린 잎"], ["line", "선화 표본"], ["branch", "가지"], ["wreath", "리스"], ["frond", "큰 잎사귀"], ["grid", "표본 격자"]];
+  var LTYPES = ["ovate", "long", "serr", "oak", "tear", "ginkgo", "maple", "heart", "round", "fern"], INK = ["#2f3d2a", "#3a4a32", "#4a4a2c", "#2f4038", "#4b3b2a"];
+  function lu(ty, x, y, rot, sc, col, op) { return '<use href="#ll-' + ty + '" transform="translate(' + x.toFixed(1) + " " + y.toFixed(1) + ") rotate(" + rot.toFixed(0) + ") scale(" + sc.toFixed(2) + ')" style="color:' + col + '"' + (op ? ' opacity="' + op + '"' : "") + "/>"; }
+  function artStyle(key, seed) {
+    if (key === "press" || !key) return artPress(seed);
+    var r = rng(String(seed || "x")), ink = INK[Math.floor(r() * INK.length)], i, t, o = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="100" height="100" fill="#EDE6D3"/>';
+    var pick = function () { return LTYPES[Math.floor(r() * LTYPES.length)]; };
+    if (key === "line") {
+      [[24, 26], [72, 24], [48, 54], [20, 78], [76, 74], [50, 88]].forEach(function (p) { o += lu(pick(), p[0] + (r() - .5) * 8, p[1] + (r() - .5) * 8, r() * 360, .5 + r() * .22, ink); });
+    } else if (key === "branch") {
+      var P0 = [12 + r() * 8, 92], C = [18 + r() * 14, 36], P2 = [82 + r() * 6, 12 + r() * 8], ty = pick(), N = 10;
+      o += '<path d="M' + P0[0].toFixed(1) + " " + P0[1] + "Q" + C[0].toFixed(1) + " " + C[1] + " " + P2[0].toFixed(1) + " " + P2[1].toFixed(1) + '" fill="none" stroke="' + ink + '" stroke-width=".7" stroke-linecap="round"/>';
+      for (i = 0; i <= N; i++) {
+        t = .14 + .86 * i / N; var u = 1 - t, x = u * u * P0[0] + 2 * u * t * C[0] + t * t * P2[0], y = u * u * P0[1] + 2 * u * t * C[1] + t * t * P2[1];
+        var dx = 2 * u * (C[0] - P0[0]) + 2 * t * (P2[0] - C[0]), dy = 2 * u * (C[1] - P0[1]) + 2 * t * (P2[1] - C[1]), rt = Math.atan2(dx, -dy) * 180 / Math.PI;
+        var rot = i === N ? rt : rt + (i % 2 ? 55 : -55), sc = .62 - .3 * t, sh = 23 * sc, a = rot * Math.PI / 180;
+        o += lu(ty, x + Math.sin(a) * sh, y - Math.cos(a) * sh, rot, sc, ink);
+      }
+    } else if (key === "wreath") {
+      var ty2 = ["ovate", "tear", "serr", "long"][Math.floor(r() * 4)], M = 10, R = 29;
+      o += '<circle cx="50" cy="50" r="' + R + '" fill="none" stroke="' + ink + '" stroke-width=".6"/>';
+      for (i = 0; i < M; i++) {
+        var an = 2 * Math.PI * i / M, tx = -Math.sin(an), tyy = Math.cos(an), rt2 = Math.atan2(tx, -tyy) * 180 / Math.PI, rot2 = rt2 + (i % 2 ? 40 : -40), a2 = rot2 * Math.PI / 180, s2 = .44;
+        o += lu(ty2, 50 + R * Math.cos(an) + Math.sin(a2) * 23 * s2, 50 + R * Math.sin(an) - Math.cos(a2) * 23 * s2, rot2, s2, ink);
+      }
+    } else if (key === "frond") {
+      o += lu("fern", 50, 52, (r() - .5) * 36, 1.4, ink) + lu(pick(), 16, 18, r() * 360, .36, ink, ".6") + lu(pick(), 86, 86, r() * 360, .36, ink, ".6");
+    } else if (key === "grid") {
+      for (i = 0; i < 9; i++) {
+        var cx = 20 + (i % 3) * 30, cy = 20 + Math.floor(i / 3) * 30;
+        o += '<rect x="' + (cx - 13) + '" y="' + (cy - 13) + '" width="26" height="26" fill="none" stroke="' + ink + '" stroke-width=".25" opacity=".45"/>' + lu(pick(), cx, cy, (r() - .5) * 50, .36, ink);
+      }
+    }
+    return o + "</svg>";
+  }
+  function art(seed) { return artStyle(T.art, seed); }
   function photoOrArt(id, seed, w) { return id ? '<img src="' + imgUrl(id, w) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="' + esc(seed) + '">' : art(seed); }
   document.addEventListener("error", function (e) {
     var t = e.target;
@@ -765,22 +809,29 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
 
   /* ---------- 설정 ---------- */
   function buildDesign() {
-    var h = '<div class="form"><span class="lbl">색상</span><div class="row" id="swatches">' + PRESETS.map(function (p) { return '<button type="button" class="sw" data-bg="' + p[1] + '" style="background:' + p[1] + '" aria-label="' + p[0] + '" title="' + p[0] + '" aria-pressed="false"></button>'; }).join("") + "</div>";
+    var h = '<div class="form" data-cat="color"><span class="lbl">색상</span><div class="row" id="swatches">' + PRESETS.map(function (p) { return '<button type="button" class="sw" data-bg="' + p[1] + '" style="background:' + p[1] + '" aria-label="' + p[0] + '" title="' + p[0] + '" aria-pressed="false"></button>'; }).join("") + "</div>";
     COLORS.forEach(function (c) { h += '<div class="srow"><label for="c-' + c[0] + '">' + c[1] + '</label><input type="color" id="c-' + c[0] + '" data-ck="' + c[0] + '"><button type="button" class="btn small" data-reset="' + c[0] + '">기본</button></div>' + (c[0] === "bg" ? "" : '<div class="srow"><label for="a-' + c[0] + '">투명도 <b id="sv-' + c[0] + '_a"></b>%</label><input type="range" id="a-' + c[0] + '" data-tp="' + c[0] + '_a" min="0" max="100" step="5"></div>'); });
     h += "</div>";
-    h += '<div class="form sec"><span class="lbl">카드·탭 모양</span><div class="srow"><label for="v-bs">카드 테두리</label><select id="v-bs" data-tp="bs"><option value="ring">이중선 (기본)</option><option value="solid">실선</option><option value="double">겹선</option><option value="dashed">점선</option><option value="dotted">점무늬선</option><option value="none">없음</option></select></div><div class="srow"><label for="v-bw">테두리 굵기 <b id="sv-bw"></b>px</label><input type="range" id="v-bw" data-tp="bw" min="0" max="8" step="0.5"></div><div class="srow"><label for="v-br">모서리 둥글기 <b id="sv-br"></b>px</label><input type="range" id="v-br" data-tp="br" min="0" max="20" step="1"></div><div class="srow"><label for="v-cw">식물 카드 크기 <b id="sv-cw"></b>px</label><input type="range" id="v-cw" data-tp="cw" min="80" max="220" step="4"></div><div class="srow"><label for="v-tbh">메뉴 탭 높이 <b id="sv-tbh"></b>px</label><input type="range" id="v-tbh" data-tp="tbh" min="26" max="60" step="2"></div><div class="srow"><label for="v-tbp">메뉴 탭 가로 여백 <b id="sv-tbp"></b>px</label><input type="range" id="v-tbp" data-tp="tbp" min="6" max="32" step="1"></div></div>';
-    h += '<div class="form sec"><span class="lbl">배경 사진 (내 휴대폰 또는 올려 둔 사진)</span><input type="file" id="bg-file" accept="image/*" hidden><div class="bgpick" id="bgpick"></div><div class="srow"><label for="v-veil">배경색 가림막 <b id="sv-veil"></b>%</label><input type="range" id="v-veil" data-tp="veil" min="0" max="85" step="5"></div>' +
+    h += '<div class="form sec" data-cat="card"><span class="lbl">사진이 없을 때 그림</span><div class="artpick" id="artpick">' + ART_STYLES.map(function (a) { return '<div><button type="button" class="bgp" data-artstyle="' + a[0] + '" aria-pressed="false" aria-label="' + a[1] + '">' + artStyle(a[0], "sample") + '</button><span class="note">' + a[1] + "</span></div>"; }).join("") + '</div><p class="note">식물 사진을 올리지 않은 카드에 들어가는 그림이에요.</p></div>';
+    h += '<div class="form sec" data-cat="card"><span class="lbl">카드·탭 모양</span><div class="srow"><label for="v-bs">카드 테두리</label><select id="v-bs" data-tp="bs"><option value="ring">이중선 (기본)</option><option value="solid">실선</option><option value="double">겹선</option><option value="dashed">점선</option><option value="dotted">점무늬선</option><option value="none">없음</option></select></div><div class="srow"><label for="v-bw">테두리 굵기 <b id="sv-bw"></b>px</label><input type="range" id="v-bw" data-tp="bw" min="0" max="8" step="0.5"></div><div class="srow"><label for="v-br">모서리 둥글기 <b id="sv-br"></b>px</label><input type="range" id="v-br" data-tp="br" min="0" max="20" step="1"></div><div class="srow"><label for="v-cw">식물 카드 크기 <b id="sv-cw"></b>px</label><input type="range" id="v-cw" data-tp="cw" min="80" max="220" step="4"></div><div class="srow"><label for="v-tbh">메뉴 탭 높이 <b id="sv-tbh"></b>px</label><input type="range" id="v-tbh" data-tp="tbh" min="26" max="60" step="2"></div><div class="srow"><label for="v-tbp">메뉴 탭 가로 여백 <b id="sv-tbp"></b>px</label><input type="range" id="v-tbp" data-tp="tbp" min="6" max="32" step="1"></div></div>';
+    h += '<div class="form sec" data-cat="bg"><span class="lbl">배경 사진 (내 휴대폰 또는 올려 둔 사진)</span><input type="file" id="bg-file" accept="image/*" hidden><div class="bgpick" id="bgpick"></div><div class="srow"><label for="v-veil">배경색 가림막 <b id="sv-veil"></b>%</label><input type="range" id="v-veil" data-tp="veil" min="0" max="85" step="5"></div>' +
       '<span class="lbl">질감</span><div class="srow"><label for="v-tex">종류</label><select id="v-tex" data-tp="tex"><option value="none">없음</option><option value="paper">종이</option><option value="grain">거친 입자</option><option value="linen">린넨</option><option value="dots">점무늬</option></select></div>' +
       '<div class="srow"><label for="v-texs">질감 세기 <b id="sv-texs"></b>%</label><input type="range" id="v-texs" data-tp="texs" min="5" max="100" step="5"></div><p class="note">‘내 사진 고르기’는 휴대폰 사진을 도감 사진 폴더에 올려서 쓰는 방식이라, 아래 편집 비밀번호 칸에 먼저 비밀번호를 입력해야 해요. 올린 사진은 목록에 남아 다시 고를 수 있어요. 사진을 쓰면 배경색은 사진 위에 덮는 가림막 색으로 쓰여요. 질감은 배경색과 사진 위에 얹혀요.</p></div>';
     [["tt", "큰 제목"], ["ts", "작은 제목"], ["nm", "식물 이름 (카드)"], ["ls", "이름 목록"], ["tb", "상단 탭"], ["ct", "총 갯수"]].forEach(function (g) {
       var k = g[0], mx = k === "tt" ? [18, 80] : k === "ts" ? [8, 28] : k === "ls" ? [12, 32] : k === "tb" ? [10, 22] : k === "ct" ? [9, 22] : [10, 24];
-      h += '<div class="form sec"><span class="lbl">' + g[1] + '</span>' + (k === "nm" || k === "ls" || k === "tb" || k === "ct" ? "" : '<input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">') +
+      h += '<div class="form sec" data-cat="font"><span class="lbl">' + g[1] + '</span>' + (k === "nm" || k === "ls" || k === "tb" || k === "ct" ? "" : '<input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">') +
         '<div class="srow"><label for="t-' + k + '-font">글씨체</label><select id="t-' + k + '-font" data-tk="' + k + '" data-tf="font">' + FONTS.map(function (f) { return '<option value="' + f[0] + '">' + f[1] + "</option>"; }).join("") + "</select></div>" +
         '<div class="srow"><label for="t-' + k + '-size">크기 <b id="t-' + k + '-sv"></b></label><input type="range" id="t-' + k + '-size" data-tk="' + k + '" data-tf="size" min="' + mx[0] + '" max="' + mx[1] + '" step="1"></div>' +
         (k === "nm" || k === "ls" || k === "tb" ? "" : '<div class="srow"><label for="t-' + k + '-color">글자색</label><input type="color" id="t-' + k + '-color" data-tk="' + k + '" data-tf="color"><button type="button" class="btn small" data-reset="' + k + ':color">기본</button></div>') + '</div>';
     });
-    h += '<div class="row"><button type="button" class="btn small" data-reset="all">디자인 전체 초기화</button></div><p class="note">바꾼 내용은 미리보기예요. 맨 아래에서 편집 비밀번호를 입력하고 ‘저장’을 눌러야 모든 기기에 적용돼요. 저장하지 않고 닫으면 취소돼요.</p>';
-    $("#set-design").innerHTML = h; $("#pv-art").innerHTML = art("preview"); bgSig = null; buildBgPick();
+    h += '<div class="row" data-cat="color bg font card"><button type="button" class="btn small" data-reset="all">디자인 전체 초기화</button></div><p class="note" data-cat="color bg font card">바꾼 내용은 미리보기예요. 맨 아래에서 편집 비밀번호를 입력하고 ‘저장’을 눌러야 모든 기기에 적용돼요. 저장하지 않고 닫으면 취소돼요.</p>';
+    $("#set-design").innerHTML = h; $("#pv-art").innerHTML = art("preview"); bgSig = null; buildBgPick(); showCat();
+  }
+  var curCat = "color";
+  function showCat(c) {
+    if (c) curCat = c;
+    [].forEach.call(document.querySelectorAll("#settings [data-cat]"), function (el) { el.hidden = el.getAttribute("data-cat").split(" ").indexOf(curCat) < 0; });
+    [].forEach.call(document.querySelectorAll("[data-scat]"), function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-scat") === curCat ? "true" : "false"); });
   }
   var bgSig = null;
   function buildBgPick() {
@@ -801,6 +852,8 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     });
     [].forEach.call(document.querySelectorAll("[data-tp]"), function (el) { var p = el.getAttribute("data-tp"), dv = { veil: 35, tex: "none", texs: 40, bs: "ring", bw: 1.5, br: 2, cw: 108, tbh: 32, tbp: 12 }[p]; if (dv === undefined) dv = 100; if (document.activeElement !== el) el.value = T[p] == null ? dv : T[p]; var sv = $("#sv-" + p); if (sv) sv.textContent = el.value; });
     [].forEach.call(document.querySelectorAll(".bgp"), function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-bgimg") || "") === (T.bgimg || "") ? "true" : "false"); });
+    [].forEach.call(document.querySelectorAll("[data-artstyle]"), function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-artstyle") === (T.art || "press") ? "true" : "false"); });
+    var pa = $("#pv-art"); if (pa) pa.innerHTML = art("preview");
     var sw = document.querySelectorAll(".sw");
     for (var i = 0; i < sw.length; i++) sw[i].setAttribute("aria-pressed", sw[i].getAttribute("data-bg").toLowerCase() === EFF.bg.toLowerCase() ? "true" : "false");
   }
@@ -854,12 +907,14 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
 
   /* ---------- 이벤트 ---------- */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-open],[data-view],[data-act],[data-gid],[data-gal],[data-bg],[data-bgimg],[data-pick],[data-reset]");
+    var t = e.target.closest("[data-open],[data-view],[data-act],[data-gid],[data-gal],[data-bg],[data-bgimg],[data-scat],[data-artstyle],[data-pick],[data-reset]");
     if (!t) { if (e.target.id === "sheet") closeSheet(); else if (e.target.id === "conn") closeConn(); else if (e.target.id === "settings") closeSettings(); else if (e.target.id === "lightbox") { state.lb = null; state.gl = null; renderLb(); } return; }
     if (t.hasAttribute("data-open")) return openSheet(t.getAttribute("data-open"), "view");
     if (t.hasAttribute("data-view")) { state.view = t.getAttribute("data-view"); lsSet("plantdex.view", state.view); return render(); }
     if (t.hasAttribute("data-gid")) { state.lb = { gid: t.getAttribute("data-gid"), confirm: false }; return renderLb(); }
     if (t.hasAttribute("data-gal")) { state.gl = galItems[Number(t.getAttribute("data-gal"))] || null; return renderLb(); }
+    if (t.hasAttribute("data-scat")) return showCat(t.getAttribute("data-scat"));
+    if (t.hasAttribute("data-artstyle")) { T.art = t.getAttribute("data-artstyle"); return themeChanged(); }
     if (t.hasAttribute("data-bgimg")) { var bv = t.getAttribute("data-bgimg"); if (bv) T.bgimg = bv; else delete T.bgimg; return themeChanged(); }
     if (t.hasAttribute("data-bg")) { T.bg = t.getAttribute("data-bg"); return themeChanged(); }
     if (t.hasAttribute("data-pick")) return pickPlant(t.getAttribute("data-pick"));
