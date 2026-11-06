@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>나의 식물 도감</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Nanum+Pen+Script&family=Gaegu:wght@400;700&family=Jua&family=Song+Myung&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Nanum+Pen+Script&family=Gaegu:wght@400;700&family=Jua&family=Song+Myung&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Black+Han+Sans&family=Do+Hyeon&family=East+Sea+Dokdo&family=Gamja+Flower&family=Hi+Melody&family=Single+Day&family=Yeon+Sung&family=Poor+Story&family=Sunflower:wght@300;500;700&family=Dokdo&family=Cute+Font&family=Gugi&family=Kirang+Haerang&family=Nanum+Brush+Script&family=Nanum+Gothic:wght@400;700&family=Stylish&family=Playfair+Display:wght@400;700&family=Cormorant+Garamond:wght@500;700&family=Cinzel:wght@400;700&family=Special+Elite&family=Courier+Prime:wght@400;700&family=Dancing+Script:wght@400;700&display=swap">
 <style>
 /* Layout: centered two-line title (editable), a small centered row of menu tabs (add / all / by group / album), then framed plate cards: picture in its own frame, name below, point-colored outer border. */
 :root {
@@ -57,7 +57,7 @@ button { font: inherit; color: inherit; }
 #sv-bar { position: sticky; bottom: 0; z-index: 4; background: var(--bg); border-top: 1px solid var(--line); padding: 10px 0 4px; display: grid; gap: 8px; margin-top: 12px; }
 #pv .cell { cursor: default; } #pv .art { aspect-ratio: 1; }
 #pv .names { padding: 0; } #pv .names button { text-align: left; } #pv { gap: 6px; padding: 8px; } #pv .names button { cursor: default; border: 0; padding: 4px 0; }
-.mt { min-height: 32px; padding: 4px 12px; font-family: var(--tb-font, inherit); font-size: var(--tb-size, 13px); font-weight: 500; background: var(--tab); color: var(--tabfg); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+.mt { min-height: var(--tab-h, 32px); padding: 4px var(--tab-px, 12px); font-family: var(--tb-font, inherit); font-size: var(--tb-size, 13px); font-weight: 500; background: var(--tab); color: var(--tabfg); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
 .mt:hover { border-color: var(--accent); }
 .mt[aria-pressed="true"] { background: var(--tabon); color: var(--tabonfg); border-color: var(--tabon); }
 .count { font-family: var(--ct-font, var(--font-mono)); font-size: var(--ct-size, 12px); letter-spacing: .04em; color: var(--ct-color, var(--muted)); margin-left: auto; padding-left: 4px; }
@@ -80,11 +80,11 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; flex: none; }
 .names button { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); align-items: baseline; gap: 6px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 12px 2px; color: inherit; cursor: pointer; font-family: var(--ls-font, var(--font-display)); font-size: var(--ls-size, 18px); letter-spacing: .06em; line-height: 1.35; }
 .names .no { opacity: .55; font-size: .72em; }
 .names .nn { overflow-wrap: anywhere; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 16px 14px; padding: 4px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-w, 108px), 1fr)); gap: 16px 14px; padding: 4px; }
 .cell { display: flex; flex-direction: column; gap: 7px; padding: 7px 7px 9px; min-width: 0; text-align: center; cursor: pointer;
-  background: var(--plate); color: var(--platefg); border: 1.5px solid var(--plateline); border-radius: 2px;
-  box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--plateline); }
-.cell:hover { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--accent); }
+  background: var(--plate); color: var(--platefg); border: var(--cb-w, 1.5px) var(--cb-s, solid) var(--plateline); border-radius: var(--cb-r, 2px);
+  box-shadow: var(--cb-ring, 0 0 0 3px var(--bg), 0 0 0 4px var(--plateline)); }
+.cell:hover { border-color: var(--accent); box-shadow: var(--cb-ringh, 0 0 0 3px var(--bg), 0 0 0 4px var(--accent)); }
 .art { display: block; aspect-ratio: 1 / 1; width: 100%; overflow: hidden; background: var(--paper); border: 1px solid var(--plateline); }
 .art.sq { aspect-ratio: 1 / 1; }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -241,7 +241,18 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     ["notoserif", "노토 명조", '"Noto Serif KR",serif', 700], ["notosans", "노토 고딕", '"Noto Sans KR",sans-serif', 700],
     ["nanummj", "나눔명조", '"Nanum Myeongjo",serif', 700], ["pen", "나눔 손글씨 펜", '"Nanum Pen Script",cursive', 400],
     ["gaegu", "개구쟁이", '"Gaegu",cursive', 700], ["jua", "주아", '"Jua",sans-serif', 400], ["song", "송명", '"Song Myung",serif', 400],
-    ["plex", "IBM 플렉스", '"IBM Plex Sans KR",sans-serif', 600], ["mono", "모노 (영문 추천)", '"IBM Plex Mono",ui-monospace,monospace', 500]
+    ["plex", "IBM 플렉스", '"IBM Plex Sans KR",sans-serif', 600], ["mono", "모노 (영문 추천)", '"IBM Plex Mono",ui-monospace,monospace', 500],
+    ["nanumgo", "나눔고딕", '"Nanum Gothic","Noto Sans KR",sans-serif', 700], ["sunflower", "해바라기", '"Sunflower","Noto Sans KR",sans-serif', 500],
+    ["dohyeon", "도현", '"Do Hyeon","Noto Sans KR",sans-serif', 400], ["blackhan", "검은고딕", '"Black Han Sans","Noto Sans KR",sans-serif', 400],
+    ["yeonsung", "연성", '"Yeon Sung","Noto Serif KR",cursive', 400], ["gugi", "구기", '"Gugi","Noto Sans KR",cursive', 400],
+    ["stylish", "스타일리쉬", '"Stylish","Noto Serif KR",serif', 400], ["poorstory", "푸어스토리", '"Poor Story","Gaegu",cursive', 400],
+    ["gamja", "감자꽃", '"Gamja Flower","Gaegu",cursive', 400], ["himelody", "하이멜로디", '"Hi Melody","Gaegu",cursive', 400],
+    ["singleday", "싱글데이", '"Single Day","Gaegu",cursive', 400], ["cute", "큐트폰트", '"Cute Font","Gaegu",cursive', 400],
+    ["eastsea", "동해 독도", '"East Sea Dokdo","Nanum Pen Script",cursive', 400], ["dokdo", "독도", '"Dokdo","Nanum Pen Script",cursive', 400],
+    ["brush", "나눔 붓글씨", '"Nanum Brush Script","Nanum Pen Script",cursive', 400], ["haerang", "기랑해랑", '"Kirang Haerang","Nanum Pen Script",cursive', 400],
+    ["playfair", "Playfair (영문 명조)", '"Playfair Display","Noto Serif KR",serif', 700], ["cormorant", "Cormorant (영문 고전)", '"Cormorant Garamond","Noto Serif KR",serif', 700],
+    ["cinzel", "Cinzel (영문 대문자)", '"Cinzel","Noto Serif KR",serif', 700], ["typewriter", "Special Elite (타자기)", '"Special Elite","Nanum Gothic",monospace', 400],
+    ["courier", "Courier Prime (타자체)", '"Courier Prime","Nanum Gothic",monospace', 700], ["dancing", "Dancing Script (영문 필기)", '"Dancing Script","Nanum Pen Script",cursive', 700]
   ];
   var DEF = { tt: { text: "나의 식물 도감", font: "gowun", size: 40 }, ts: { text: "MY PLANT COLLECTION", font: "mono", size: 11 }, nm: { font: "gowun", size: 14 }, ct: { font: "mono", size: 12 }, ls: { font: "gowun", size: 18 }, tb: { font: "gowun", size: 13 } };
   var COLORS = [["bg", "전체 배경"], ["plate", "식물 카드 배경"], ["plateline", "카드 테두리"], ["tab", "메뉴 탭"], ["tabon", "선택된 메뉴 탭"], ["ab", "사진첩 배경"]];
@@ -300,14 +311,22 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     var set = function (k, v) { s.setProperty(k, v); };
     set("--bg", bg); set("--fg", fg); set("--muted", mix(fg, bg, 0.68)); set("--card", card); set("--line", mix(fg, bg, 0.2));
     set("--accent", accent); set("--accent-fg", ink(accent)); set("--tint", mix(accent, bg, 0.14)); set("--danger", dark ? "#F0A093" : "#A8382B");
-    set("--plate", plate); set("--platefg", platefg); set("--plateline", plateline);
-    set("--tab", tab); set("--tabfg", ink(tab)); set("--tabon", tabon); set("--tabonfg", ink(tabon));
+    function al(h, k) { var a = T[k + "_a"] == null ? 100 : Number(T[k + "_a"]); return a >= 100 ? h : "rgba(" + hex2rgb(h).join(",") + "," + (Math.max(0, a) / 100) + ")"; }
+    set("--plate", al(plate, "plate")); set("--platefg", platefg); set("--plateline", al(plateline, "plateline"));
+    set("--tab", al(tab, "tab")); set("--tabfg", ink(tab)); set("--tabon", al(tabon, "tabon")); set("--tabonfg", ink(tabon));
+    var bs = T.bs || "ring", bw = T.bw == null ? 1.5 : Number(T.bw), rg = 3 + Math.max(1, Math.round(bw * 0.7));
+    set("--cb-s", bs === "dashed" ? "dashed" : bs === "dotted" ? "dotted" : bs === "double" ? "double" : "solid");
+    set("--cb-w", (bs === "none" ? 0 : bs === "double" ? Math.max(3, bw) : bw) + "px");
+    set("--cb-ring", bs === "ring" ? "0 0 0 3px var(--bg), 0 0 0 " + rg + "px var(--plateline)" : "none");
+    set("--cb-ringh", bs === "ring" ? "0 0 0 3px var(--bg), 0 0 0 " + rg + "px var(--accent)" : "none");
+    set("--cb-r", (T.br == null ? 2 : Number(T.br)) + "px");
+    set("--card-w", (Number(T.cw) || 108) + "px"); set("--tab-h", (Number(T.tbh) || 32) + "px"); set("--tab-px", (T.tbp == null ? 12 : Number(T.tbp)) + "px");
     var nmo = T.nm || {}; set("--nm-font", fontOf(nmo.font || DEF.nm.font)[2]); set("--nm-size", (Number(nmo.size) || DEF.nm.size) + "px");
     var lso = T.ls || {}; set("--ls-font", fontOf(lso.font || DEF.ls.font)[2]); set("--ls-size", (Number(lso.size) || DEF.ls.size) + "px");
     var tbo = T.tb || {}; set("--tb-font", fontOf(tbo.font || DEF.tb.font)[2]); set("--tb-size", (Number(tbo.size) || DEF.tb.size) + "px");
     var cto = T.ct || {}; set("--ct-font", fontOf(cto.font || DEF.ct.font)[2]); set("--ct-size", (Number(cto.size) || DEF.ct.size) + "px");
     var ctc = okHex(cto.color) ? cto.color : mix(fg, bg, 0.68); set("--ct-color", ctc); EFF.ctcolor = ctc;
-    set("--albg", okHex(T.ab) ? T.ab : "transparent");
+    set("--albg", okHex(T.ab) ? al(T.ab, "ab") : "transparent");
     var rgb = hex2rgb(bg).map(Math.round).join(","), va = Math.min(0.9, Math.max(0, (T.veil == null ? 35 : Number(T.veil)) / 100));
     set("--fx-img", T.bgimg ? "linear-gradient(rgba(" + rgb + "," + va + "),rgba(" + rgb + "," + va + ")),url(\"" + imgUrl(T.bgimg, 1600) + "\")" : "none");
     set("--tx-img", texImg(T.tex, dark)); set("--tx-size", T.tex === "paper" ? "240px 240px, 240px 240px" : T.tex === "grain" ? "240px 240px" : T.tex === "dots" ? "9px 9px" : "auto"); set("--tx-op", String((T.texs == null ? 40 : Number(T.texs)) / 100));
@@ -747,8 +766,9 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   /* ---------- 설정 ---------- */
   function buildDesign() {
     var h = '<div class="form"><span class="lbl">색상</span><div class="row" id="swatches">' + PRESETS.map(function (p) { return '<button type="button" class="sw" data-bg="' + p[1] + '" style="background:' + p[1] + '" aria-label="' + p[0] + '" title="' + p[0] + '" aria-pressed="false"></button>'; }).join("") + "</div>";
-    COLORS.forEach(function (c) { h += '<div class="srow"><label for="c-' + c[0] + '">' + c[1] + '</label><input type="color" id="c-' + c[0] + '" data-ck="' + c[0] + '"><button type="button" class="btn small" data-reset="' + c[0] + '">기본</button></div>'; });
+    COLORS.forEach(function (c) { h += '<div class="srow"><label for="c-' + c[0] + '">' + c[1] + '</label><input type="color" id="c-' + c[0] + '" data-ck="' + c[0] + '"><button type="button" class="btn small" data-reset="' + c[0] + '">기본</button></div>' + (c[0] === "bg" ? "" : '<div class="srow"><label for="a-' + c[0] + '">투명도 <b id="sv-' + c[0] + '_a"></b>%</label><input type="range" id="a-' + c[0] + '" data-tp="' + c[0] + '_a" min="0" max="100" step="5"></div>'); });
     h += "</div>";
+    h += '<div class="form sec"><span class="lbl">카드·탭 모양</span><div class="srow"><label for="v-bs">카드 테두리</label><select id="v-bs" data-tp="bs"><option value="ring">이중선 (기본)</option><option value="solid">실선</option><option value="double">겹선</option><option value="dashed">점선</option><option value="dotted">점무늬선</option><option value="none">없음</option></select></div><div class="srow"><label for="v-bw">테두리 굵기 <b id="sv-bw"></b>px</label><input type="range" id="v-bw" data-tp="bw" min="0" max="8" step="0.5"></div><div class="srow"><label for="v-br">모서리 둥글기 <b id="sv-br"></b>px</label><input type="range" id="v-br" data-tp="br" min="0" max="20" step="1"></div><div class="srow"><label for="v-cw">식물 카드 크기 <b id="sv-cw"></b>px</label><input type="range" id="v-cw" data-tp="cw" min="80" max="220" step="4"></div><div class="srow"><label for="v-tbh">메뉴 탭 높이 <b id="sv-tbh"></b>px</label><input type="range" id="v-tbh" data-tp="tbh" min="26" max="60" step="2"></div><div class="srow"><label for="v-tbp">메뉴 탭 가로 여백 <b id="sv-tbp"></b>px</label><input type="range" id="v-tbp" data-tp="tbp" min="6" max="32" step="1"></div></div>';
     h += '<div class="form sec"><span class="lbl">배경 사진 (내 휴대폰 또는 올려 둔 사진)</span><input type="file" id="bg-file" accept="image/*" hidden><div class="bgpick" id="bgpick"></div><div class="srow"><label for="v-veil">배경색 가림막 <b id="sv-veil"></b>%</label><input type="range" id="v-veil" data-tp="veil" min="0" max="85" step="5"></div>' +
       '<span class="lbl">질감</span><div class="srow"><label for="v-tex">종류</label><select id="v-tex" data-tp="tex"><option value="none">없음</option><option value="paper">종이</option><option value="grain">거친 입자</option><option value="linen">린넨</option><option value="dots">점무늬</option></select></div>' +
       '<div class="srow"><label for="v-texs">질감 세기 <b id="sv-texs"></b>%</label><input type="range" id="v-texs" data-tp="texs" min="5" max="100" step="5"></div><p class="note">‘내 사진 고르기’는 휴대폰 사진을 도감 사진 폴더에 올려서 쓰는 방식이라, 아래 편집 비밀번호 칸에 먼저 비밀번호를 입력해야 해요. 올린 사진은 목록에 남아 다시 고를 수 있어요. 사진을 쓰면 배경색은 사진 위에 덮는 가림막 색으로 쓰여요. 질감은 배경색과 사진 위에 얹혀요.</p></div>';
@@ -779,7 +799,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
       if (sz) { sz.value = Number(o.size) || d.size; $("#t-" + k + "-sv").textContent = sz.value + "px"; }
       if (co && document.activeElement !== co) co.value = EFF[k + "color"];
     });
-    [].forEach.call(document.querySelectorAll("[data-tp]"), function (el) { var p = el.getAttribute("data-tp"), dv = { veil: 35, tex: "none", texs: 40 }[p]; if (document.activeElement !== el) el.value = T[p] == null ? dv : T[p]; var sv = $("#sv-" + p); if (sv) sv.textContent = el.value; });
+    [].forEach.call(document.querySelectorAll("[data-tp]"), function (el) { var p = el.getAttribute("data-tp"), dv = { veil: 35, tex: "none", texs: 40, bs: "ring", bw: 1.5, br: 2, cw: 108, tbh: 32, tbp: 12 }[p]; if (dv === undefined) dv = 100; if (document.activeElement !== el) el.value = T[p] == null ? dv : T[p]; var sv = $("#sv-" + p); if (sv) sv.textContent = el.value; });
     [].forEach.call(document.querySelectorAll(".bgp"), function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-bgimg") || "") === (T.bgimg || "") ? "true" : "false"); });
     var sw = document.querySelectorAll(".sw");
     for (var i = 0; i < sw.length; i++) sw[i].setAttribute("aria-pressed", sw[i].getAttribute("data-bg").toLowerCase() === EFF.bg.toLowerCase() ? "true" : "false");
@@ -845,7 +865,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     if (t.hasAttribute("data-pick")) return pickPlant(t.getAttribute("data-pick"));
     if (t.hasAttribute("data-reset")) {
       var r = t.getAttribute("data-reset");
-      if (r === "all") T = {}; else if (r.indexOf(":") > 0) { var pr = r.split(":"); if (T[pr[0]]) delete T[pr[0]][pr[1]]; } else delete T[r];
+      if (r === "all") T = {}; else if (r.indexOf(":") > 0) { var pr = r.split(":"); if (T[pr[0]]) delete T[pr[0]][pr[1]]; } else { delete T[r]; delete T[r + "_a"]; }
       return themeChanged();
     }
     var a = t.getAttribute("data-act");
