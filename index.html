@@ -230,7 +230,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   var $ = function (s) { return document.querySelector(s); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var CFG = window.PLANT_CONFIG || {};
-  var ALBUM = "__album__";
+  var ALBUM = "__album__", BGP = "__bg__", bgPlant = null;
   var URL_RE = /^https:\/\/script\.google\.com\/.+\/exec/;
   function webUrl() { return lsGet("plantdex.url") || CFG.WEB_APP_URL || ""; }
   function urlOk() { return URL_RE.test(webUrl()); }
@@ -351,7 +351,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   }
   function exportJson() {
     if (!state.loaded) { toast("도감을 불러온 뒤에 해 주세요"); return; }
-    var data = { app: "plant-dex", exportedAt: new Date().toISOString(), theme: T, plants: state.plants, album: albumPlant, photoLinkBase: "https://drive.google.com/file/d/<파일ID>/view" };
+    var data = { app: "plant-dex", exportedAt: new Date().toISOString(), theme: T, plants: state.plants, album: albumPlant, bg: bgPlant, photoLinkBase: "https://drive.google.com/file/d/<파일ID>/view" };
     saveFile("plant-dex-backup-" + today() + ".json", "application/json", JSON.stringify(data, null, 2)); toast("백업 파일을 만들었어요");
   }
   function exportCsv() {
@@ -366,7 +366,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     fr.onload = function () {
       var d; try { d = JSON.parse(fr.result); } catch (e) { d = null; }
       if (!d || d.app !== "plant-dex" || !Array.isArray(d.plants)) { pendingBk = null; box.hidden = false; box.textContent = "도감 백업 파일이 아니에요."; return; }
-      var list = d.plants.slice(); if (d.album) list.push(d.album); pendingBk = { list: list, theme: d.theme };
+      var list = d.plants.slice(); if (d.album) list.push(d.album); if (d.bg) list.push(d.bg); pendingBk = { list: list, theme: d.theme };
       var ph = list.reduce(function (n, p) { return n + (p.growth || []).length; }, 0);
       box.hidden = false;
       box.innerHTML = esc("식물 " + d.plants.length + "종" + (d.album ? ", 사진첩 사진 " + (d.album.growth || []).length + "장" : "") + "을 불러올까요? 같은 식물은 백업 내용으로 덮어쓰고, 백업에 없는 식물은 그대로 둬요. 아래 비밀번호 칸에 편집 비밀번호를 입력한 뒤 누르세요.") + '<div class="row" style="margin-top:8px"><button type="button" class="btn primary small" data-act="bk-go">불러오기</button><button type="button" class="btn small" data-act="bk-no">취소</button></div>';
@@ -419,7 +419,8 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   async function refresh() {
     var j = await loadList(); lastRefresh = Date.now();
     albumPlant = null;
-    state.plants = (j.plants || []).filter(function (p) { if (p.group === ALBUM) { albumPlant = p; return false; } return true; });
+    bgPlant = null;
+    state.plants = (j.plants || []).filter(function (p) { if (p.group === ALBUM) { albumPlant = p; return false; } if (p.group === BGP) { bgPlant = p; return false; } return true; });
     state.loaded = true; state.err = "";
     lsSet("plantdex.synced", String(Date.now()));
     mergeTheme(parseTheme((j.settings || {}).bg));
@@ -501,6 +502,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   function cur() { for (var i = 0; i < state.plants.length; i++) if (state.plants[i].id === state.openId) return state.plants[i]; return null; }
   function putPlant(p) {
     if (p.group === ALBUM) { albumPlant = p; return; }
+    if (p.group === BGP) { bgPlant = p; return; }
     var found = false;
     state.plants = state.plants.map(function (x) { if (x.id === p.id) { found = true; return p; } return x; });
     if (!found) state.plants.push(p);
@@ -684,6 +686,18 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     var p = cur(); if (!p || !state.lb) return;
     try { putPlant((await api("deleteGrowth", { plantId: p.id, growthId: state.lb.gid })).plant); state.lb = null; renderLb(); renderSheet(); render(); toast("사진을 삭제했어요"); } catch (e) { toast(e.message); }
   }
+  async function pickBgFile(file) {
+    var p = $("#sv-pw").value, oldpw = pw, was = unlocked;
+    if (!unlocked && !p) { toast("아래 칸에 편집 비밀번호를 먼저 입력해 주세요"); return; }
+    try {
+      if (!unlocked) { pw = p; try { await api("check"); } catch (e) { pw = oldpw; unlocked = was; throw e; } unlocked = true; }
+      toast("사진을 올리는 중이에요");
+      if (!bgPlant) bgPlant = (await api("save", { plant: { name: "배경 사진", group: BGP } })).plant;
+      bgPlant = await uploadPhoto(bgPlant.id, file, { kind: "growth", date: today(), note: "배경" });
+      var g = bgPlant.growth[bgPlant.growth.length - 1]; T.bgimg = g.file; bgSig = null; themeChanged(); renderConn();
+      toast("미리보기에 적용했어요. 맨 아래 ‘저장’을 눌러야 모든 기기에 적용돼요");
+    } catch (e) { toast(e.message); }
+  }
   async function addAlbum(files) {
     var date = ($("#a-date") && $("#a-date").value) || today(), note = ($("#a-note") && $("#a-note").value.trim()) || "", i, ok = 0;
     try {
@@ -735,9 +749,9 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     var h = '<div class="form"><span class="lbl">색상</span><div class="row" id="swatches">' + PRESETS.map(function (p) { return '<button type="button" class="sw" data-bg="' + p[1] + '" style="background:' + p[1] + '" aria-label="' + p[0] + '" title="' + p[0] + '" aria-pressed="false"></button>'; }).join("") + "</div>";
     COLORS.forEach(function (c) { h += '<div class="srow"><label for="c-' + c[0] + '">' + c[1] + '</label><input type="color" id="c-' + c[0] + '" data-ck="' + c[0] + '"><button type="button" class="btn small" data-reset="' + c[0] + '">기본</button></div>'; });
     h += "</div>";
-    h += '<div class="form sec"><span class="lbl">배경 사진 (사진첩에서 고르기)</span><div class="bgpick" id="bgpick"></div><div class="srow"><label for="v-veil">배경색 가림막 <b id="sv-veil"></b>%</label><input type="range" id="v-veil" data-tp="veil" min="0" max="85" step="5"></div>' +
+    h += '<div class="form sec"><span class="lbl">배경 사진 (내 휴대폰 또는 올려 둔 사진)</span><input type="file" id="bg-file" accept="image/*" hidden><div class="bgpick" id="bgpick"></div><div class="srow"><label for="v-veil">배경색 가림막 <b id="sv-veil"></b>%</label><input type="range" id="v-veil" data-tp="veil" min="0" max="85" step="5"></div>' +
       '<span class="lbl">질감</span><div class="srow"><label for="v-tex">종류</label><select id="v-tex" data-tp="tex"><option value="none">없음</option><option value="paper">종이</option><option value="grain">거친 입자</option><option value="linen">린넨</option><option value="dots">점무늬</option></select></div>' +
-      '<div class="srow"><label for="v-texs">질감 세기 <b id="sv-texs"></b>%</label><input type="range" id="v-texs" data-tp="texs" min="5" max="100" step="5"></div><p class="note">사진을 쓰면 배경색은 사진 위에 덮는 가림막 색으로 쓰여요. 질감은 배경색과 사진 위에 얹혀요.</p></div>';
+      '<div class="srow"><label for="v-texs">질감 세기 <b id="sv-texs"></b>%</label><input type="range" id="v-texs" data-tp="texs" min="5" max="100" step="5"></div><p class="note">‘내 사진 고르기’는 휴대폰 사진을 도감 사진 폴더에 올려서 쓰는 방식이라, 아래 편집 비밀번호 칸에 먼저 비밀번호를 입력해야 해요. 올린 사진은 목록에 남아 다시 고를 수 있어요. 사진을 쓰면 배경색은 사진 위에 덮는 가림막 색으로 쓰여요. 질감은 배경색과 사진 위에 얹혀요.</p></div>';
     [["tt", "큰 제목"], ["ts", "작은 제목"], ["nm", "식물 이름 (카드)"], ["ls", "이름 목록"], ["tb", "상단 탭"], ["ct", "총 갯수"]].forEach(function (g) {
       var k = g[0], mx = k === "tt" ? [18, 80] : k === "ts" ? [8, 28] : k === "ls" ? [12, 32] : k === "tb" ? [10, 22] : k === "ct" ? [9, 22] : [10, 24];
       h += '<div class="form sec"><span class="lbl">' + g[1] + '</span>' + (k === "nm" || k === "ls" || k === "tb" || k === "ct" ? "" : '<input type="text" id="t-' + k + '-text" data-tk="' + k + '" data-tf="text" maxlength="60" placeholder="비우면 숨겨져요" aria-label="' + g[1] + ' 내용">') +
@@ -751,9 +765,9 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
   var bgSig = null;
   function buildBgPick() {
     var el = $("#bgpick"); if (!el) return;
-    var items = albumPlant ? (albumPlant.growth || []) : [], sig = items.map(function (g) { return g.file; }).join();
+    var items = (bgPlant ? (bgPlant.growth || []) : []).concat(albumPlant ? (albumPlant.growth || []) : []), sig = items.map(function (g) { return g.file; }).join();
     if (sig === bgSig) return; bgSig = sig;
-    el.innerHTML = '<button type="button" class="bgp" data-bgimg="">사용 안 함</button>' + items.map(function (g) { return '<button type="button" class="bgp" data-bgimg="' + esc(g.file) + '"><img src="' + imgUrl(g.file, 160) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></button>'; }).join("") + (items.length ? "" : '<p class="note" style="grid-column:1/-1;margin:0">사진첩에 사진을 올리면 여기서 고를 수 있어요.</p>');
+    el.innerHTML = '<label class="bgp" for="bg-file" style="display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer">내 사진<br>고르기</label><button type="button" class="bgp" data-bgimg="">사용 안 함</button>' + items.map(function (g) { return '<button type="button" class="bgp" data-bgimg="' + esc(g.file) + '"><img src="' + imgUrl(g.file, 160) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></button>'; }).join("") + "";
     if (EFF.bg) syncDesign();
   }
   function syncDesign() {
@@ -872,6 +886,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     var t = e.target, f = t.files && t.files[0];
     if (t.id === "up-main" && f) { setMainPhoto(f); t.value = ""; }
     else if (t.id === "g-file" && f) { addGrowth(f); t.value = ""; }
+    else if (t.id === "bg-file" && t.files.length) { pickBgFile(t.files[0]); t.value = ""; }
     else if (t.id === "bk-file" && t.files.length) { readBackup(t.files[0]); t.value = ""; }
     else if (t.id === "a-file" && t.files.length) { addAlbum(Array.prototype.slice.call(t.files)); t.value = ""; }
     else if (t.id === "f-photo" && f) { state.pendingFile = f; $("#f-photo-name").textContent = f.name; $("#f-prev").innerHTML = '<img src="' + URL.createObjectURL(f) + '" alt="">'; }
