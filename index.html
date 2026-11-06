@@ -199,6 +199,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
         <div class="pvc"><div class="cell"><span class="art" id="pv-art"></span><span class="nm">몬스테라</span></div><ol class="names"><li><button type="button" tabindex="-1"><span class="no">01.</span><span class="nn">아스파라거스</span></button></li><li><button type="button" tabindex="-1"><span class="no">02.</span><span class="nn">몬스테라 히메</span></button></li></ol></div>
       </div>
       <div id="set-design" class="body" style="padding:0"></div>
+      <div class="form sec"><span class="lbl">백업·내보내기</span><div class="row"><button type="button" class="btn small" data-act="bk-json">전체 백업 (JSON)</button><button type="button" class="btn small" data-act="bk-csv">식물 목록 (엑셀용 CSV)</button></div><p class="note">식물 정보, 사진첩 목록, 디자인 설정이 파일로 저장돼요. 사진 자체는 구글 드라이브의 ‘식물 도감 사진’ 폴더에 있고, 파일에는 사진 링크가 들어가요. 아이폰에서는 공유 창에서 ‘파일에 저장’을 고르세요.</p></div>
       <div class="form sec"><span class="lbl">공유 링크</span><div class="row"><input id="site-link" readonly aria-label="웹 링크" style="flex:1 1 200px;width:auto"><button type="button" class="btn small" data-act="copy-link">복사</button><a class="btn small" id="site-open" target="_blank" rel="noopener">열기</a></div><p class="note">이 링크로 사파리 앱이나 다른 브라우저에서도 열 수 있어요. 링크를 받은 사람은 보기만 할 수 있고, 설정을 저장하려면 편집 비밀번호가 필요해요.</p></div>
       <div class="form sec"><span class="lbl">편집 비밀번호 변경</span><input type="password" id="nw-pw" autocomplete="new-password" placeholder="새 비밀번호 (바꿀 때만 입력)"><span class="lbl">농사로 인증키</span><input type="password" id="nw-key" autocomplete="off" placeholder="새 인증키 (바꿀 때만 입력)"><p class="note">비밀번호와 인증키는 구글 시트의 앱스 스크립트에 저장돼요. 화면에는 다시 보이지 않아요.</p></div>
       <div id="sv-bar"><input type="password" id="sv-pw" autocomplete="current-password" placeholder="편집 비밀번호를 입력하고 저장" aria-label="편집 비밀번호"><div class="row"><button type="button" class="btn small" data-act="set-revert">되돌리기</button><button type="button" class="btn primary small" id="sv-ok" data-act="set-save" style="flex:1">저장</button></div></div>
@@ -337,6 +338,25 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     if (!dirty) return;
     try { T = JSON.parse(snap); } catch (e) { T = {}; }
     dirty = false; applyTheme(); syncDesign(); render(); if (!quiet) toast("저장하지 않은 변경을 취소했어요");
+  }
+  function csvCell(v) { v = v == null ? "" : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  function photoLink(id) { return id ? "https://drive.google.com/file/d/" + id + "/view" : ""; }
+  async function saveFile(name, mime, text) {
+    var f = new File([text], name, { type: mime });
+    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f] }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    var u = URL.createObjectURL(f), a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+  }
+  function exportJson() {
+    if (!state.loaded) { toast("도감을 불러온 뒤에 해 주세요"); return; }
+    var data = { app: "plant-dex", exportedAt: new Date().toISOString(), theme: T, plants: state.plants, album: albumPlant, photoLinkBase: "https://drive.google.com/file/d/<파일ID>/view" };
+    saveFile("plant-dex-backup-" + today() + ".json", "application/json", JSON.stringify(data, null, 2)); toast("백업 파일을 만들었어요");
+  }
+  function exportCsv() {
+    if (!state.loaded) { toast("도감을 불러온 뒤에 해 주세요"); return; }
+    var rows = [["번호", "종류", "이름", "들인 날", "물 준 날짜", "물 주기", "햇빛", "관리 방법", "메모", "대표 사진 링크", "성장 사진 수"]];
+    state.plants.forEach(function (p, k) { rows.push([k + 1, p.group, p.name, p.acquired, p.watered, p.water, p.light, p.care, p.memo, photoLink(p.photo), (p.growth || []).length]); });
+    saveFile("plant-dex-" + today() + ".csv", "text/csv", "\ufeff" + rows.map(function (x) { return x.map(csvCell).join(","); }).join("\r\n")); toast("목록 파일을 만들었어요");
   }
   async function saveSettings() {
     var p = $("#sv-pw").value, np = $("#nw-pw").value, nk = $("#nw-key").value.trim(), btn = $("#sv-ok"), oldpw = pw, was = unlocked;
@@ -793,6 +813,8 @@ input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 42p
     else if (a === "lb-del") { state.lb.confirm = true; renderLb(); }
     else if (a === "lb-del-no") { state.lb.confirm = false; renderLb(); }
     else if (a === "lb-del-yes") deleteGrowth();
+    else if (a === "bk-json") exportJson();
+    else if (a === "bk-csv") exportCsv();
     else if (a === "set-save") saveSettings();
     else if (a === "set-revert") revertSettings();
     else if (a === "copy-link") { var lk = $("#site-link"); lk.select(); var ok = function () { toast("링크를 복사했어요"); }; try { navigator.clipboard.writeText(lk.value).then(ok, function () { document.execCommand("copy"); ok(); }); } catch (e2) { document.execCommand("copy"); ok(); } }
